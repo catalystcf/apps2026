@@ -5,7 +5,6 @@ npx prettier --check .
 
 npx prettier --write .
 
-
 npm run build
 
 npx vite src --host 127.0.0.1
