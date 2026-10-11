@@ -1,3 +1,15 @@
+# Example commands
+
+npm run format:check
+npx prettier --check .
+
+npx prettier --write .
+
+
+npm run build
+
+npx vite src --host 127.0.0.1
+
 # Lint and build setup
 
 - `package.json` defines the scripts:
