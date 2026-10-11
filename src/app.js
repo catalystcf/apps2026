@@ -1,4 +1,9 @@
 import { getNextCellValue } from "./cell-input.js";
+import {
+  getBorderLine,
+  getCellBorderEdge,
+  toggleBorderLine,
+} from "./cell-borders.js";
 
 const app = document.createElement("div");
 app.className = "app-shell";
@@ -31,19 +36,97 @@ grid.setAttribute("aria-label", "Worksheet cells");
 const rowCount = 12;
 const columnCount = 8;
 const cellValues = new Map();
+const borderLines = new Set();
 let activeCell = null;
+let hoveredBorder = null;
+
+function updateHoveredBorder(cell, row, column, event) {
+  const edge = getCellBorderEdge(
+    event.clientX,
+    event.clientY,
+    cell.getBoundingClientRect(),
+  );
+  const nextBorder = edge
+    ? getBorderLine(row, column, edge, columnCount)
+    : null;
+
+  if (hoveredBorder?.key === nextBorder?.key) {
+    return;
+  }
+
+  if (hoveredBorder) {
+    grid.children[hoveredBorder.cellIndex].removeAttribute("data-hover-edge");
+  }
+
+  hoveredBorder = nextBorder;
+  if (hoveredBorder) {
+    grid.children[hoveredBorder.cellIndex].setAttribute(
+      "data-hover-edge",
+      hoveredBorder.edge,
+    );
+  }
+}
 
 for (let row = 0; row < rowCount; row += 1) {
   for (let column = 0; column < columnCount; column += 1) {
     const cell = document.createElement("button");
     cell.className = "worksheet-cell";
     cell.type = "button";
+    const borderSegments = ["top", "right", "bottom", "left"].map((edge) => {
+      const segment = document.createElement("span");
+      segment.className = `cell-border cell-border--${edge}`;
+      segment.setAttribute("aria-hidden", "true");
+      return segment;
+    });
+    const cellValue = document.createElement("span");
+    cellValue.className = "worksheet-cell-value";
+    cell.append(...borderSegments, cellValue);
     cell.setAttribute("aria-pressed", "false");
     cell.setAttribute(
       "aria-label",
       `Row ${row + 1}, column ${column + 1}, empty`,
     );
-    cell.addEventListener("click", () => {
+    cell.addEventListener("pointermove", (event) => {
+      updateHoveredBorder(cell, row, column, event);
+    });
+    cell.addEventListener("pointerleave", () => {
+      if (hoveredBorder) {
+        grid.children[hoveredBorder.cellIndex].removeAttribute(
+          "data-hover-edge",
+        );
+        hoveredBorder = null;
+      }
+    });
+    cell.addEventListener("click", (event) => {
+      const edge = getCellBorderEdge(
+        event.clientX,
+        event.clientY,
+        cell.getBoundingClientRect(),
+      );
+
+      if (edge) {
+        const line = getBorderLine(row, column, edge, columnCount);
+        const enabled = toggleBorderLine(borderLines, line.key);
+        const lineCell = grid.children[line.cellIndex];
+
+        if (enabled) {
+          lineCell.setAttribute(`data-border-${line.edge}`, "true");
+          lineCell.setAttribute("data-has-border", "true");
+        } else {
+          lineCell.removeAttribute(`data-border-${line.edge}`);
+          if (
+            !["top", "right", "bottom", "left"].some((borderEdge) =>
+              lineCell.hasAttribute(`data-border-${borderEdge}`),
+            )
+          ) {
+            lineCell.removeAttribute("data-has-border");
+          }
+        }
+
+        status.textContent = enabled ? "Border added" : "Border removed";
+        return;
+      }
+
       activeCell?.setAttribute("aria-pressed", "false");
       activeCell = cell;
       activeCell.setAttribute("aria-pressed", "true");
@@ -122,7 +205,7 @@ for (const keyDefinition of keys) {
       cellValues.delete(cellIndex);
     }
 
-    activeCell.textContent = nextValue;
+    activeCell.querySelector(".worksheet-cell-value").textContent = nextValue;
     const cellPosition = Array.from(grid.children).indexOf(activeCell);
     const row = Math.floor(cellPosition / columnCount) + 1;
     const column = (cellPosition % columnCount) + 1;

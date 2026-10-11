@@ -115,6 +115,8 @@
 
       .worksheet-cell {
         display: grid;
+        position: relative;
+        z-index: 0;
         min-width: 0;
         place-items: center end;
         padding: 0.5rem;
@@ -125,8 +127,70 @@
         text-align: right;
       }
 
-      .worksheet-cell[aria-pressed="true"] {
+      .worksheet-cell[data-has-border="true"],
+      .worksheet-cell[data-hover-edge] {
+        z-index: 2;
+      }
+
+      .cell-border {
+        position: absolute;
+        z-index: 2;
+        display: none;
+        background: #111;
+        pointer-events: none;
+      }
+
+      .cell-border--top,
+      .cell-border--bottom {
+        right: -1px;
+        left: -1px;
+        height: 3px;
+      }
+
+      .cell-border--top {
+        top: -1px;
+      }
+
+      .cell-border--bottom {
+        bottom: -1px;
+      }
+
+      .cell-border--right,
+      .cell-border--left {
+        top: -1px;
+        bottom: -1px;
+        width: 3px;
+      }
+
+      .cell-border--right {
+        right: -1px;
+      }
+
+      .cell-border--left {
+        left: -1px;
+      }
+
+      .worksheet-cell[data-border-top="true"] .cell-border--top,
+      .worksheet-cell[data-border-right="true"] .cell-border--right,
+      .worksheet-cell[data-border-bottom="true"] .cell-border--bottom,
+      .worksheet-cell[data-border-left="true"] .cell-border--left {
+        display: block;
+      }
+
+      .worksheet-cell[data-hover-edge="top"] .cell-border--top,
+      .worksheet-cell[data-hover-edge="right"] .cell-border--right,
+      .worksheet-cell[data-hover-edge="bottom"] .cell-border--bottom,
+      .worksheet-cell[data-hover-edge="left"] .cell-border--left {
+        display: block;
+        background: #2563eb;
+      }
+
+      .worksheet-cell-value {
         position: relative;
+        z-index: 1;
+      }
+
+      .worksheet-cell[aria-pressed="true"] {
         z-index: 1;
         outline: 2px solid #dc2626;
         outline-offset: -2px;
