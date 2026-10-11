@@ -2,71 +2,99 @@ const app = document.createElement("div");
 app.className = "app-shell";
 
 const header = document.createElement("header");
-header.className = "site-header";
+header.className = "app-header";
 
-const brand = document.createElement("a");
-brand.className = "brand";
-brand.href = "#";
-brand.setAttribute("aria-label", "Open Space home");
+const title = document.createElement("h1");
+title.className = "app-title";
+title.textContent = "Math Worksheet";
 
-const brandMark = document.createElement("span");
-brandMark.className = "brand-mark";
-brandMark.setAttribute("aria-hidden", "true");
-brandMark.textContent = "o";
+const status = document.createElement("span");
+status.className = "app-status";
+status.textContent = "Ready for your work";
 
-const brandName = document.createElement("span");
-brandName.textContent = "open space";
-brand.append(brandMark, brandName);
+header.append(title, status);
 
-const headerLink = document.createElement("a");
-headerLink.className = "header-link";
-headerLink.href = "#welcome";
-headerLink.textContent = "Explore";
+const workspace = document.createElement("main");
+workspace.className = "workspace";
 
-header.append(brand, headerLink);
+const worksheet = document.createElement("section");
+worksheet.className = "worksheet-panel";
+worksheet.setAttribute("aria-labelledby", "worksheet-heading");
 
-const main = document.createElement("main");
-main.className = "page-content";
-main.id = "welcome";
+const worksheetHeading = document.createElement("h2");
+worksheetHeading.className = "panel-heading";
+worksheetHeading.id = "worksheet-heading";
+worksheetHeading.textContent = "Worksheet";
 
-const welcomeCard = document.createElement("section");
-welcomeCard.className = "welcome-card";
-welcomeCard.setAttribute("aria-labelledby", "welcome-title");
+const paper = document.createElement("div");
+paper.className = "worksheet-paper";
+paper.textContent = "Your worksheet";
 
-const welcomeCopy = document.createElement("div");
+worksheet.append(worksheetHeading, paper);
 
-const eyebrow = document.createElement("p");
-eyebrow.className = "eyebrow";
-eyebrow.textContent = "A little room to begin";
+const keyboard = document.createElement("section");
+keyboard.className = "keyboard-panel";
+keyboard.setAttribute("aria-labelledby", "keyboard-heading");
 
-const heading = document.createElement("h1");
-heading.id = "welcome-title";
-heading.textContent = "Make space for what matters.";
+const keyboardHeading = document.createElement("div");
+keyboardHeading.className = "keyboard-heading";
 
-const intro = document.createElement("p");
-intro.className = "intro";
-intro.textContent =
-  "A calm, simple starting point for your next idea. Take a breath, find your focus, and make today your own.";
+const keyboardTitle = document.createElement("h2");
+keyboardTitle.className = "panel-heading";
+keyboardTitle.id = "keyboard-heading";
+keyboardTitle.textContent = "Keyboard";
 
-welcomeCopy.append(eyebrow, heading, intro);
+const keyboardHint = document.createElement("span");
+keyboardHint.className = "keyboard-hint";
+keyboardHint.textContent = "Numbers & operators";
 
-const artwork = document.createElement("div");
-artwork.className = "welcome-art";
-artwork.setAttribute("role", "img");
-artwork.setAttribute("aria-label", "A warm sun rising over soft green hills");
+keyboardHeading.append(keyboardTitle, keyboardHint);
 
-const sun = document.createElement("span");
-sun.className = "sun";
-sun.setAttribute("aria-hidden", "true");
-sun.textContent = "✳";
-artwork.append(sun);
+const keypad = document.createElement("div");
+keypad.className = "keypad";
+keypad.setAttribute("role", "group");
+keypad.setAttribute("aria-label", "Virtual number and operator keyboard");
 
-welcomeCard.append(welcomeCopy, artwork);
-main.append(welcomeCard);
+const keys = [
+  { label: "7" },
+  { label: "8" },
+  { label: "9" },
+  { label: "/", operator: true },
+  { label: "4" },
+  { label: "5" },
+  { label: "6" },
+  { label: "*", operator: true },
+  { label: "1" },
+  { label: "2" },
+  { label: "3" },
+  { label: "-", operator: true },
+  { label: "0", zero: true },
+  { label: "." },
+  { label: "=", equals: true },
+  { label: "+", operator: true },
+];
 
-const footer = document.createElement("footer");
-footer.className = "site-footer";
-footer.textContent = "A simple place to start.";
+for (const keyDefinition of keys) {
+  const key = document.createElement("div");
+  key.className = "key";
 
-app.append(header, main, footer);
+  if (keyDefinition.operator) {
+    key.classList.add("key--operator");
+  }
+
+  if (keyDefinition.zero) {
+    key.classList.add("key--zero");
+  }
+
+  if (keyDefinition.equals) {
+    key.classList.add("key--equals");
+  }
+
+  key.textContent = keyDefinition.label;
+  keypad.append(key);
+}
+
+keyboard.append(keyboardHeading, keypad);
+workspace.append(worksheet, keyboard);
+app.append(header, workspace);
 document.body.append(app);

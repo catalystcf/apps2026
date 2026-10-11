@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="A simple, welcoming starting point for your next idea."
+      content="A phone-friendly math worksheet with a virtual number keyboard."
     />
-    <meta name="theme-color" content="#f5f7f2" />
-    <title>Open Space</title>
+    <meta name="theme-color" content="#f4f6f8" />
+    <title>Math Worksheet</title>
     <style>
       :root {
         color-scheme: light;
@@ -20,8 +20,8 @@
           BlinkMacSystemFont,
           "Segoe UI",
           sans-serif;
-        color: #18322b;
-        background: #f5f7f2;
+        color: #1e293b;
+        background: #f4f6f8;
         font-synthesis: none;
         text-rendering: optimizeLegibility;
         -webkit-font-smoothing: antialiased;
@@ -38,176 +38,200 @@
         margin: 0;
       }
 
-      a {
-        color: inherit;
-      }
-
       .app-shell {
         display: flex;
-        min-height: 100vh;
-        min-height: 100svh;
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
         flex-direction: column;
-        padding: max(1.25rem, env(safe-area-inset-top))
-          max(1.25rem, env(safe-area-inset-right))
-          max(1.25rem, env(safe-area-inset-bottom))
-          max(1.25rem, env(safe-area-inset-left));
+        overflow: hidden;
+        padding: max(0.75rem, env(safe-area-inset-top))
+          max(0.75rem, env(safe-area-inset-right))
+          max(0.75rem, env(safe-area-inset-bottom))
+          max(0.75rem, env(safe-area-inset-left));
       }
 
-      .site-header,
-      .site-footer {
-        width: min(100%, 68rem);
-        margin-inline: auto;
-      }
-
-      .site-header {
+      .app-header {
         display: flex;
+        min-height: 3.25rem;
         align-items: center;
         justify-content: space-between;
         gap: 1rem;
+        padding-inline: 0.25rem;
       }
 
-      .brand {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.65rem;
-        font-size: 1rem;
-        font-weight: 750;
-        letter-spacing: -0.03em;
-        text-decoration: none;
-      }
-
-      .brand-mark {
-        display: grid;
-        width: 2rem;
-        aspect-ratio: 1;
-        place-items: center;
-        border-radius: 0.7rem;
-        background: #d9e9dc;
-        color: #246348;
-        font-size: 1.1rem;
-      }
-
-      .header-link {
-        padding: 0.55rem 0.85rem;
-        border: 1px solid #dce4da;
-        border-radius: 999px;
-        color: #425c51;
-        font-size: 0.875rem;
-        text-decoration: none;
-      }
-
-      .header-link:focus-visible,
-      .brand:focus-visible {
-        outline: 3px solid #78a889;
-        outline-offset: 4px;
-      }
-
-      .page-content {
-        display: grid;
-        width: min(100%, 68rem);
-        flex: 1;
-        align-items: center;
-        margin: 0 auto;
-        padding-block: clamp(3rem, 9vh, 7rem);
-      }
-
-      .welcome-card {
-        display: grid;
-        grid-template-columns: minmax(0, 1.1fr) minmax(15rem, 0.9fr);
-        align-items: center;
-        gap: clamp(2rem, 7vw, 6rem);
-        padding: clamp(1.5rem, 6vw, 5rem);
-        border: 1px solid #e5ebe2;
-        border-radius: 2rem;
-        background: #fff;
-        box-shadow: 0 1.5rem 5rem rgb(38 66 49 / 7%);
-      }
-
-      .eyebrow {
-        margin: 0 0 1rem;
-        color: #397657;
-        font-size: 0.75rem;
-        font-weight: 750;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-      }
-
-      h1 {
-        max-width: 11ch;
+      .app-title {
         margin: 0;
-        font-size: clamp(2.75rem, 7vw, 5.5rem);
-        font-weight: 650;
-        letter-spacing: -0.075em;
-        line-height: 0.98;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: -0.025em;
       }
 
-      .intro {
-        max-width: 34rem;
-        margin: 1.5rem 0 0;
-        color: #61736b;
-        font-size: clamp(1rem, 2vw, 1.125rem);
-        line-height: 1.7;
-      }
-
-      .welcome-art {
-        display: grid;
-        min-height: 17rem;
-        place-items: center;
-        overflow: hidden;
-        border-radius: 1.5rem;
-        background:
-          radial-gradient(ellipse at 50% 110%, #a8cdb0 0 23%, transparent 24%),
-          radial-gradient(ellipse at 50% 120%, #cbe1c8 0 41%, transparent 42%),
-          linear-gradient(150deg, #e8f1e6, #f4f5e9 72%);
-      }
-
-      .sun {
-        display: grid;
-        width: clamp(6rem, 16vw, 9rem);
-        aspect-ratio: 1;
-        place-items: center;
-        border-radius: 50%;
-        background: #f5d895;
-        box-shadow: 0 0 4rem rgb(245 216 149 / 60%);
-        color: #825d25;
-        font-size: 2rem;
-      }
-
-      .site-footer {
-        padding-top: 1rem;
-        color: #748179;
+      .app-status {
+        color: #64748b;
         font-size: 0.8125rem;
+      }
+
+      .workspace {
+        display: flex;
+        width: min(100%, 76rem);
+        flex: 1;
+        flex-direction: column;
+        min-height: 0;
+        gap: 0.625rem;
+        align-self: center;
+        padding-top: 0.75rem;
+      }
+
+      .worksheet-panel,
+      .keyboard-panel {
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid #e1e7ed;
+        border-radius: 1rem;
+        background: #fff;
+        box-shadow: 0 0.5rem 1.5rem rgb(31 41 55 / 5%);
+      }
+
+      .worksheet-panel {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        padding: clamp(1rem, 3vw, 1.5rem);
+      }
+
+      .panel-heading {
+        margin: 0;
+        font-size: 0.9375rem;
+        font-weight: 650;
+      }
+
+      .worksheet-paper {
+        display: grid;
+        flex: 1;
+        min-height: 0;
+        place-items: center;
+        margin-top: 1rem;
+        border: 1px dashed #d6dee7;
+        border-radius: 0.75rem;
+        background-color: #fbfcfd;
+        background-image: linear-gradient(#eef2f6 1px, transparent 1px);
+        background-size: 100% 2.5rem;
+        color: #8a98a9;
+        font-size: 0.875rem;
         text-align: center;
+      }
+
+      .keyboard-panel {
+        display: flex;
+        width: 100%;
+        flex: 0 0 auto;
+        flex-direction: column;
+        padding: clamp(0.75rem, 2vw, 1.25rem);
+      }
+
+      .keyboard-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+
+      .keyboard-hint {
+        color: #8995a4;
+        font-size: 0.75rem;
+      }
+
+      .keypad {
+        display: grid;
+        flex: none;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-rows: repeat(4, clamp(2.75rem, 7.5dvh, 3.75rem));
+        gap: clamp(0.4rem, 1.2vw, 0.7rem);
+        padding-top: 1rem;
+      }
+
+      .key {
+        display: grid;
+        min-width: 0;
+        place-items: center;
+        border: 1px solid #e1e7ed;
+        border-radius: 0.75rem;
+        background: #f8fafc;
+        color: #263548;
+        font-size: clamp(1.125rem, 3vw, 1.5rem);
+        font-weight: 550;
+        user-select: none;
+      }
+
+      .key--operator {
+        border-color: #d8e6df;
+        background: #eff6f2;
+        color: #276447;
+      }
+
+      .key--equals {
+        border-color: #286646;
+        background: #286646;
+        color: #fff;
+      }
+
+      .key--zero {
+        grid-column: span 2;
       }
 
       @media (max-width: 640px) {
         .app-shell {
-          padding-inline: max(1rem, env(safe-area-inset-left));
-          padding-right: max(1rem, env(safe-area-inset-right));
+          padding: max(0.5rem, env(safe-area-inset-top))
+            max(0.5rem, env(safe-area-inset-right))
+            max(0.5rem, env(safe-area-inset-bottom))
+            max(0.5rem, env(safe-area-inset-left));
         }
 
-        .page-content {
-          padding-block: 2rem;
+        .app-header {
+          min-height: 2.75rem;
         }
 
-        .welcome-card {
-          grid-template-columns: 1fr;
-          gap: 2rem;
-          padding: clamp(1.5rem, 8vw, 2.5rem);
-          border-radius: 1.5rem;
+        .workspace {
+          padding-top: 0.5rem;
         }
 
-        .welcome-art {
-          min-height: 12rem;
-          border-radius: 1.1rem;
+        .worksheet-panel {
+          flex: 1;
+          padding: 0.875rem;
+        }
+
+        .worksheet-paper {
+          margin-top: 0.75rem;
+          background-size: 100% 2rem;
+        }
+
+        .keyboard-panel {
+          padding: 0.75rem;
+        }
+
+        .keypad {
+          gap: 0.4rem;
+          padding-top: 0.65rem;
+        }
+      }
+
+      @media (max-width: 360px) {
+        .app-status,
+        .keyboard-hint {
+          font-size: 0.6875rem;
+        }
+
+        .keypad {
+          gap: 0.3rem;
         }
       }
     </style>
     <script type="module" src="./app.js"></script>
   </head>
   <body>
-    <noscript
-      >This page needs JavaScript enabled to display its content.</noscript
-    >
+    <noscript>
+      This worksheet needs JavaScript enabled to display its layout.
+    </noscript>
   </body>
 </html>
