@@ -54,7 +54,7 @@
         display: flex;
         min-height: 3.25rem;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-start;
         gap: 1rem;
         padding-inline: 0.25rem;
       }
@@ -67,8 +67,44 @@
       }
 
       .app-status {
+        flex: 1;
         color: #64748b;
         font-size: 0.8125rem;
+      }
+
+      .clear-button {
+        display: grid;
+        width: 2.25rem;
+        height: 2.25rem;
+        flex: 0 0 auto;
+        place-items: center;
+        padding: 0.45rem;
+        border: 1px solid #e1e7ed;
+        border-radius: 0.625rem;
+        background: #fff;
+        color: #64748b;
+        cursor: pointer;
+      }
+
+      .clear-button:hover {
+        border-color: #fca5a5;
+        background: #fef2f2;
+        color: #b91c1c;
+      }
+
+      .clear-button:focus-visible {
+        outline: 2px solid #dc2626;
+        outline-offset: 2px;
+      }
+
+      .clear-button svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.75;
       }
 
       .workspace {

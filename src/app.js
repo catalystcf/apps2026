@@ -22,7 +22,15 @@ status.className = "app-status";
 status.setAttribute("aria-live", "polite");
 status.textContent = "Select a cell to start";
 
-header.append(title, status);
+const clearButton = document.createElement("button");
+clearButton.className = "clear-button";
+clearButton.type = "button";
+clearButton.setAttribute("aria-label", "Clear worksheet");
+clearButton.title = "Clear worksheet";
+clearButton.innerHTML =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3" /></svg>';
+
+header.append(title, status, clearButton);
 
 const workspace = document.createElement("main");
 workspace.className = "workspace";
@@ -263,6 +271,23 @@ function renderCells() {
     }
   }
 }
+
+function clearWorksheet() {
+  cellValues.clear();
+  borderLines.clear();
+  decimalPoints.clear();
+  activePosition = null;
+  followPointerAfterKeyboard = false;
+  clearHoveredBorder();
+  clearHoveredDecimal();
+  renderCells();
+  keypad.querySelectorAll("button").forEach((keyButton) => {
+    keyButton.disabled = true;
+  });
+  status.textContent = "Worksheet cleared";
+}
+
+clearButton.addEventListener("click", clearWorksheet);
 
 function updateActiveCell(keyDefinition) {
   if (!activePosition || !activeCell) {
