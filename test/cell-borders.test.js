@@ -2,6 +2,8 @@ import { expect, test } from "vitest";
 import {
   getBorderLine,
   getCellBorderEdge,
+  hasBorderAroundCell,
+  isNearDecimalPoint,
   toggleBorderLine,
 } from "../src/cell-borders.js";
 
@@ -32,4 +34,21 @@ test("toggling a border adds it, then removes it", () => {
   expect(lines.has("h:3:4")).toBe(true);
   expect(toggleBorderLine(lines, "h:3:4")).toBe(false);
   expect(lines.has("h:3:4")).toBe(false);
+});
+
+test("detects the decimal point hotspot and cell borders", () => {
+  const rect = {
+    top: 10,
+    right: 110,
+    bottom: 60,
+    left: 10,
+    width: 100,
+    height: 50,
+  };
+  const lines = new Set(["v:2:4"]);
+
+  expect(isNearDecimalPoint(96, 46, rect)).toBe(true);
+  expect(isNearDecimalPoint(20, 30, rect)).toBe(false);
+  expect(hasBorderAroundCell(lines, 2, 3)).toBe(true);
+  expect(hasBorderAroundCell(lines, 2, 2)).toBe(false);
 });

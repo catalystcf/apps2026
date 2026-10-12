@@ -2,6 +2,8 @@ import { getNextCellValue } from "./cell-input.js";
 import {
   getBorderLine,
   getCellBorderEdge,
+  hasBorderAroundCell,
+  isNearDecimalPoint,
   toggleBorderLine,
 } from "./cell-borders.js";
 
@@ -37,8 +39,24 @@ const rowCount = 12;
 const columnCount = 8;
 const cellValues = new Map();
 const borderLines = new Set();
+const decimalPoints = new Set();
 let activeCell = null;
 let hoveredBorder = null;
+let hoveredDecimal = null;
+
+function clearHoveredBorder() {
+  if (hoveredBorder) {
+    grid.children[hoveredBorder.cellIndex].removeAttribute("data-hover-edge");
+    hoveredBorder = null;
+  }
+}
+
+function clearHoveredDecimal() {
+  if (hoveredDecimal !== null) {
+    grid.children[hoveredDecimal].removeAttribute("data-hover-decimal");
+    hoveredDecimal = null;
+  }
+}
 
 function updateHoveredBorder(cell, row, column, event) {
   const edge = getCellBorderEdge(
@@ -46,24 +64,39 @@ function updateHoveredBorder(cell, row, column, event) {
     event.clientY,
     cell.getBoundingClientRect(),
   );
-  const nextBorder = edge
-    ? getBorderLine(row, column, edge, columnCount)
-    : null;
 
-  if (hoveredBorder?.key === nextBorder?.key) {
-    return;
-  }
+  if (edge) {
+    clearHoveredDecimal();
+    const nextBorder = getBorderLine(row, column, edge, columnCount);
+    if (hoveredBorder?.key === nextBorder.key) {
+      return;
+    }
 
-  if (hoveredBorder) {
-    grid.children[hoveredBorder.cellIndex].removeAttribute("data-hover-edge");
-  }
-
-  hoveredBorder = nextBorder;
-  if (hoveredBorder) {
+    clearHoveredBorder();
+    hoveredBorder = nextBorder;
     grid.children[hoveredBorder.cellIndex].setAttribute(
       "data-hover-edge",
       hoveredBorder.edge,
     );
+    return;
+  }
+
+  clearHoveredBorder();
+  const cellIndex = row * columnCount + column;
+  const nearDecimalPoint =
+    !hasBorderAroundCell(borderLines, row, column) &&
+    isNearDecimalPoint(
+      event.clientX,
+      event.clientY,
+      cell.getBoundingClientRect(),
+    );
+
+  if (nearDecimalPoint && hoveredDecimal !== cellIndex) {
+    clearHoveredDecimal();
+    hoveredDecimal = cellIndex;
+    cell.setAttribute("data-hover-decimal", "true");
+  } else if (!nearDecimalPoint) {
+    clearHoveredDecimal();
   }
 }
 
@@ -80,7 +113,10 @@ for (let row = 0; row < rowCount; row += 1) {
     });
     const cellValue = document.createElement("span");
     cellValue.className = "worksheet-cell-value";
-    cell.append(...borderSegments, cellValue);
+    const decimalPoint = document.createElement("span");
+    decimalPoint.className = "cell-decimal";
+    decimalPoint.setAttribute("aria-hidden", "true");
+    cell.append(...borderSegments, cellValue, decimalPoint);
     cell.setAttribute("aria-pressed", "false");
     cell.setAttribute(
       "aria-label",
@@ -90,12 +126,8 @@ for (let row = 0; row < rowCount; row += 1) {
       updateHoveredBorder(cell, row, column, event);
     });
     cell.addEventListener("pointerleave", () => {
-      if (hoveredBorder) {
-        grid.children[hoveredBorder.cellIndex].removeAttribute(
-          "data-hover-edge",
-        );
-        hoveredBorder = null;
-      }
+      clearHoveredBorder();
+      clearHoveredDecimal();
     });
     cell.addEventListener("click", (event) => {
       const edge = getCellBorderEdge(
@@ -123,7 +155,47 @@ for (let row = 0; row < rowCount; row += 1) {
           }
         }
 
+        if (enabled) {
+          for (let borderRow = 0; borderRow < rowCount; borderRow += 1) {
+            for (
+              let borderColumn = 0;
+              borderColumn < columnCount;
+              borderColumn += 1
+            ) {
+              const borderCellIndex = borderRow * columnCount + borderColumn;
+              if (
+                decimalPoints.has(borderCellIndex) &&
+                hasBorderAroundCell(borderLines, borderRow, borderColumn)
+              ) {
+                decimalPoints.delete(borderCellIndex);
+                grid.children[borderCellIndex].removeAttribute("data-decimal");
+              }
+            }
+          }
+        }
+
         status.textContent = enabled ? "Border added" : "Border removed";
+        return;
+      }
+
+      if (
+        isNearDecimalPoint(
+          event.clientX,
+          event.clientY,
+          cell.getBoundingClientRect(),
+        )
+      ) {
+        if (hasBorderAroundCell(borderLines, row, column)) {
+          status.textContent = "Decimal point unavailable in a bordered cell";
+          return;
+        }
+
+        const cellIndex = row * columnCount + column;
+        decimalPoints.add(cellIndex);
+        cell.setAttribute("data-decimal", "true");
+        cell.removeAttribute("data-hover-decimal");
+        hoveredDecimal = null;
+        status.textContent = `Decimal point added to row ${row + 1}, column ${column + 1}`;
         return;
       }
 

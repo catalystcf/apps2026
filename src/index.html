@@ -190,6 +190,35 @@
         z-index: 1;
       }
 
+      .cell-decimal {
+        position: absolute;
+        z-index: 2;
+        right: 14px;
+        bottom: 14px;
+        display: none;
+        width: 4px;
+        height: 4px;
+        transform: translate(50%, 50%);
+        border: 1px solid #111;
+        border-radius: 50%;
+        background: transparent;
+        pointer-events: none;
+      }
+
+      .worksheet-cell[data-hover-decimal="true"] .cell-decimal {
+        display: block;
+        width: 10px;
+        height: 10px;
+      }
+
+      .worksheet-cell[data-decimal="true"] .cell-decimal {
+        display: block;
+        width: 4px;
+        height: 4px;
+        border: 0;
+        background: #111;
+      }
+
       .worksheet-cell[aria-pressed="true"] {
         z-index: 1;
         outline: 2px solid #dc2626;

@@ -12,6 +12,22 @@ export function getCellBorderEdge(clientX, clientY, rect, hitSize = 8) {
   return distance >= 0 && distance <= hitSize ? edge : null;
 }
 
+export function isNearDecimalPoint(clientX, clientY, rect, hitSize = 8) {
+  const pointX = rect.right - 14;
+  const pointY = rect.bottom - 14;
+
+  return Math.hypot(clientX - pointX, clientY - pointY) <= hitSize;
+}
+
+export function hasBorderAroundCell(lines, row, column) {
+  return (
+    lines.has(`v:${row}:${column}`) ||
+    lines.has(`v:${row}:${column + 1}`) ||
+    lines.has(`h:${row}:${column}`) ||
+    lines.has(`h:${row + 1}:${column}`)
+  );
+}
+
 export function getBorderLine(row, column, edge, columnCount) {
   const cellIndex = row * columnCount + column;
 
