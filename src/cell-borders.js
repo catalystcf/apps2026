@@ -13,7 +13,7 @@ export function getCellBorderEdge(clientX, clientY, rect, hitSize = 8) {
 }
 
 export function isNearDecimalPoint(clientX, clientY, rect, hitSize = 8) {
-  const pointX = rect.right - 14;
+  const pointX = rect.right - 11;
   const pointY = rect.bottom - 14;
 
   return Math.hypot(clientX - pointX, clientY - pointY) <= hitSize;

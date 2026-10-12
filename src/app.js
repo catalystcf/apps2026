@@ -1,4 +1,7 @@
-import { getNextCellValue } from "./cell-input.js";
+import {
+  getKeyboardKeyDefinition,
+  getNextCellValue,
+} from "./cell-input.js";
 import {
   getBorderLine,
   getCellBorderEdge,
@@ -10,6 +13,9 @@ import {
 
 const app = document.createElement("div");
 app.className = "app-shell";
+if (/Android/i.test(navigator.userAgent)) {
+  app.classList.add("app-shell--android");
+}
 
 const header = document.createElement("header");
 header.className = "app-header";
@@ -44,6 +50,7 @@ const borderLines = new Set();
 const decimalPoints = new Set();
 let activeCell = null;
 let activePosition = null;
+let followPointerAfterKeyboard = false;
 let hoveredBorder = null;
 let hoveredDecimal = null;
 
@@ -76,7 +83,7 @@ function updateHoveredBorder(cell, row, column, event) {
     clearHoveredDecimal();
     const nextBorder = getBorderLine(row, column, edge, columnCount);
     if (hoveredBorder?.key === nextBorder.key) {
-      return;
+      return true;
     }
 
     clearHoveredBorder();
@@ -85,7 +92,7 @@ function updateHoveredBorder(cell, row, column, event) {
       "data-hover-edge",
       hoveredBorder.edge,
     );
-    return;
+    return true;
   }
 
   clearHoveredBorder();
@@ -104,6 +111,30 @@ function updateHoveredBorder(cell, row, column, event) {
     cell.setAttribute("data-hover-decimal", "true");
   } else if (!nearDecimalPoint) {
     clearHoveredDecimal();
+  }
+
+  return nearDecimalPoint;
+}
+
+function selectCell(
+  cell,
+  row,
+  column,
+  { announce = true, stopPointerFollowing = true } = {},
+) {
+  activeCell?.setAttribute("aria-pressed", "false");
+  activeCell = cell;
+  activePosition = { row, column };
+  if (stopPointerFollowing) {
+    followPointerAfterKeyboard = false;
+  }
+  activeCell.setAttribute("aria-pressed", "true");
+  keypad.querySelectorAll("button").forEach((keyButton) => {
+    keyButton.disabled = false;
+  });
+
+  if (announce) {
+    status.textContent = `Row ${row + 1}, column ${column + 1} selected`;
   }
 }
 
@@ -161,7 +192,18 @@ function renderCells() {
       }
 
       cell.addEventListener("pointermove", (event) => {
-        updateHoveredBorder(cell, row, column, event);
+        const overBorderOrDecimal = updateHoveredBorder(
+          cell,
+          row,
+          column,
+          event,
+        );
+        if (!overBorderOrDecimal && followPointerAfterKeyboard) {
+          selectCell(cell, row, column, {
+            announce: false,
+            stopPointerFollowing: false,
+          });
+        }
       });
       cell.addEventListener("pointerleave", () => {
         clearHoveredBorder();
@@ -244,19 +286,62 @@ function renderCells() {
           return;
         }
 
-        activeCell?.setAttribute("aria-pressed", "false");
-        activeCell = cell;
-        activePosition = { row, column };
-        activeCell.setAttribute("aria-pressed", "true");
-        status.textContent = `Row ${row + 1}, column ${column + 1} selected`;
-        keypad.querySelectorAll("button").forEach((keyButton) => {
-          keyButton.disabled = false;
-        });
+        selectCell(cell, row, column);
       });
       grid.append(cell);
     }
   }
 }
+
+function updateActiveCell(keyDefinition) {
+  if (!activePosition || !activeCell) {
+    return;
+  }
+
+  const cellKey = getCellKey(activePosition.row, activePosition.column);
+  const currentValue = cellValues.get(cellKey) ?? "";
+  const nextValue = getNextCellValue(currentValue, keyDefinition);
+
+  if (nextValue) {
+    cellValues.set(cellKey, nextValue);
+  } else {
+    cellValues.delete(cellKey);
+  }
+
+  activeCell.querySelector(".worksheet-cell-value").textContent = nextValue;
+  const row = activePosition.row + 1;
+  const column = activePosition.column + 1;
+  activeCell.setAttribute(
+    "aria-label",
+    `Row ${row}, column ${column}, ${nextValue || "empty"}`,
+  );
+  status.textContent = nextValue
+    ? `Entered ${nextValue} in row ${row}, column ${column}`
+    : `Row ${row}, column ${column} cleared`;
+}
+
+document.addEventListener("keydown", (event) => {
+  const target = event.target;
+  if (
+    event.ctrlKey ||
+    event.metaKey ||
+    event.altKey ||
+    (target instanceof HTMLElement &&
+      (target.isContentEditable ||
+        target.closest("input, textarea, select") !== null))
+  ) {
+    return;
+  }
+
+  const keyDefinition = getKeyboardKeyDefinition(event.key);
+  if (!keyDefinition || !activeCell) {
+    return;
+  }
+
+  event.preventDefault();
+  updateActiveCell(keyDefinition);
+  followPointerAfterKeyboard = true;
+});
 
 worksheet.append(grid);
 
@@ -314,26 +399,7 @@ for (const keyDefinition of keys) {
 
   key.textContent = keyDefinition.label;
   key.addEventListener("click", () => {
-    const cellKey = getCellKey(activePosition.row, activePosition.column);
-    const currentValue = cellValues.get(cellKey) ?? "";
-    const nextValue = getNextCellValue(currentValue, keyDefinition);
-
-    if (nextValue) {
-      cellValues.set(cellKey, nextValue);
-    } else {
-      cellValues.delete(cellKey);
-    }
-
-    activeCell.querySelector(".worksheet-cell-value").textContent = nextValue;
-    const row = activePosition.row + 1;
-    const column = activePosition.column + 1;
-    activeCell.setAttribute(
-      "aria-label",
-      `Row ${row}, column ${column}, ${nextValue || "empty"}`,
-    );
-    status.textContent = nextValue
-      ? `Entered ${nextValue} in row ${row}, column ${column}`
-      : `Row ${row}, column ${column} cleared`;
+    updateActiveCell(keyDefinition);
   });
   keypad.append(key);
 }

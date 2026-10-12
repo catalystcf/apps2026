@@ -57,7 +57,9 @@ test("detects the decimal point hotspot and cell borders", () => {
   };
   const lines = new Set(["v:2:4"]);
 
-  expect(isNearDecimalPoint(96, 46, rect)).toBe(true);
+  expect(isNearDecimalPoint(99, 46, rect)).toBe(true);
+  expect(isNearDecimalPoint(107, 46, rect)).toBe(true);
+  expect(isNearDecimalPoint(108, 46, rect)).toBe(false);
   expect(isNearDecimalPoint(20, 30, rect)).toBe(false);
   expect(hasBorderAroundCell(lines, 2, 3)).toBe(true);
   expect(hasBorderAroundCell(lines, 2, 2)).toBe(false);
