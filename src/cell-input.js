@@ -7,6 +7,10 @@ export function getNextCellValue(currentValue, keyDefinition) {
 }
 
 export function getKeyboardKeyDefinition(key) {
+  if (key === ".") {
+    return { action: "decimal" };
+  }
+
   if (key === "Backspace" || key === "Delete") {
     return { action: "clear" };
   }

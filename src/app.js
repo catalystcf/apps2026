@@ -132,6 +132,22 @@ function selectCell(
   }
 }
 
+function toggleDecimalAtCell(row, column, cell) {
+  const key = getCellKey(row, column);
+  const enabled = toggleDecimalPoint(decimalPoints, key);
+  if (enabled) {
+    cell.setAttribute("data-decimal", "true");
+  } else {
+    cell.removeAttribute("data-decimal");
+  }
+
+  cell.removeAttribute("data-hover-decimal");
+  hoveredDecimal = null;
+  status.textContent = enabled
+    ? `Decimal point added to row ${row + 1}, column ${column + 1}`
+    : `Decimal point removed from row ${row + 1}, column ${column + 1}`;
+}
+
 function renderCells() {
   clearHoveredBorder();
   clearHoveredDecimal();
@@ -240,17 +256,7 @@ function renderCells() {
             cell.getBoundingClientRect(),
           )
         ) {
-          const enabled = toggleDecimalPoint(decimalPoints, key);
-          if (enabled) {
-            cell.setAttribute("data-decimal", "true");
-          } else {
-            cell.removeAttribute("data-decimal");
-          }
-          cell.removeAttribute("data-hover-decimal");
-          hoveredDecimal = null;
-          status.textContent = enabled
-            ? `Decimal point added to row ${row + 1}, column ${column + 1}`
-            : `Decimal point removed from row ${row + 1}, column ${column + 1}`;
+          toggleDecimalAtCell(row, column, cell);
           return;
         }
 
@@ -263,6 +269,15 @@ function renderCells() {
 
 function updateActiveCell(keyDefinition) {
   if (!activePosition || !activeCell) {
+    return;
+  }
+
+  if (keyDefinition.action === "decimal") {
+    toggleDecimalAtCell(
+      activePosition.row,
+      activePosition.column,
+      activeCell,
+    );
     return;
   }
 
@@ -336,7 +351,7 @@ const keys = [
   { label: "3", value: "3" },
   { label: "-", value: "-", operator: true },
   { label: "0", value: "0", zero: true },
-  { label: ".", value: "." },
+  { label: ".", action: "decimal" },
   { label: "=", value: "=", equals: true },
   { label: "+", value: "+", operator: true },
   { label: "Clear", action: "clear" },

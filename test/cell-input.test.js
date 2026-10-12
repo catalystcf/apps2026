@@ -19,7 +19,10 @@ test("clear empties the cell", () => {
 test("physical characters replace the current cell character", () => {
   expect(getKeyboardKeyDefinition("4")).toEqual({ value: "4" });
   expect(getNextCellValue("7", getKeyboardKeyDefinition("+"))).toBe("+");
-  expect(getKeyboardKeyDefinition(".")).toEqual({ value: "." });
+});
+
+test("period key toggles the decimal point instead of replacing the value", () => {
+  expect(getKeyboardKeyDefinition(".")).toEqual({ action: "decimal" });
 });
 
 test("backspace and delete clear the current cell", () => {
