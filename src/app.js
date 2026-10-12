@@ -1,7 +1,4 @@
-import {
-  getKeyboardKeyDefinition,
-  getNextCellValue,
-} from "./cell-input.js";
+import { getKeyboardKeyDefinition, getNextCellValue } from "./cell-input.js";
 import {
   getBorderLine,
   getCellBorderEdge,

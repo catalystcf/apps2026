@@ -24,9 +24,7 @@ test("physical characters replace the current cell character", () => {
 test("backspace and delete clear the current cell", () => {
   expect(getKeyboardKeyDefinition("Backspace")).toEqual({ action: "clear" });
   expect(getKeyboardKeyDefinition("Delete")).toEqual({ action: "clear" });
-  expect(
-    getNextCellValue("7", getKeyboardKeyDefinition("Backspace")),
-  ).toBe("");
+  expect(getNextCellValue("7", getKeyboardKeyDefinition("Backspace"))).toBe("");
 });
 
 test("non-character keys are ignored", () => {
