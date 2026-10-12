@@ -19,6 +19,7 @@ test("clear empties the cell", () => {
 test("physical characters replace the current cell character", () => {
   expect(getKeyboardKeyDefinition("4")).toEqual({ value: "4" });
   expect(getNextCellValue("7", getKeyboardKeyDefinition("+"))).toBe("+");
+  expect(getKeyboardKeyDefinition(".")).toEqual({ value: "." });
 });
 
 test("backspace and delete clear the current cell", () => {

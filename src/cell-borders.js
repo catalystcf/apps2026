@@ -1,4 +1,4 @@
-export function getCellBorderEdge(clientX, clientY, rect, hitSize = 8) {
+export function getCellBorderEdge(clientX, clientY, rect, hitSize = 5) {
   const distances = {
     top: clientY - rect.top,
     right: rect.right - clientX,

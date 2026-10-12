@@ -2,7 +2,6 @@ import { getKeyboardKeyDefinition, getNextCellValue } from "./cell-input.js";
 import {
   getBorderLine,
   getCellBorderEdge,
-  hasBorderAroundCell,
   isNearDecimalPoint,
   toggleDecimalPoint,
   toggleBorderLine,
@@ -94,13 +93,11 @@ function updateHoveredBorder(cell, row, column, event) {
 
   clearHoveredBorder();
   const cellIndex = row * columnCount + column;
-  const nearDecimalPoint =
-    !hasBorderAroundCell(borderLines, row, column) &&
-    isNearDecimalPoint(
-      event.clientX,
-      event.clientY,
-      cell.getBoundingClientRect(),
-    );
+  const nearDecimalPoint = isNearDecimalPoint(
+    event.clientX,
+    event.clientY,
+    cell.getBoundingClientRect(),
+  );
 
   if (nearDecimalPoint && hoveredDecimal !== cellIndex) {
     clearHoveredDecimal();
@@ -232,27 +229,6 @@ function renderCells() {
             }
           }
 
-          if (enabled) {
-            for (let borderRow = 0; borderRow < rowCount; borderRow += 1) {
-              for (
-                let borderColumn = 0;
-                borderColumn < columnCount;
-                borderColumn += 1
-              ) {
-                const decimalKey = getCellKey(borderRow, borderColumn);
-                if (
-                  decimalPoints.has(decimalKey) &&
-                  hasBorderAroundCell(borderLines, borderRow, borderColumn)
-                ) {
-                  decimalPoints.delete(decimalKey);
-                  grid.children[
-                    borderRow * columnCount + borderColumn
-                  ].removeAttribute("data-decimal");
-                }
-              }
-            }
-          }
-
           status.textContent = enabled ? "Border added" : "Border removed";
           return;
         }
@@ -264,11 +240,6 @@ function renderCells() {
             cell.getBoundingClientRect(),
           )
         ) {
-          if (hasBorderAroundCell(borderLines, row, column)) {
-            status.textContent = "Decimal point unavailable in a bordered cell";
-            return;
-          }
-
           const enabled = toggleDecimalPoint(decimalPoints, key);
           if (enabled) {
             cell.setAttribute("data-decimal", "true");
