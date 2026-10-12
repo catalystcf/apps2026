@@ -4,6 +4,7 @@ import {
   getCellBorderEdge,
   hasBorderAroundCell,
   isNearDecimalPoint,
+  toggleDecimalPoint,
   toggleBorderLine,
 } from "../src/cell-borders.js";
 
@@ -34,6 +35,15 @@ test("toggling a border adds it, then removes it", () => {
   expect(lines.has("h:3:4")).toBe(true);
   expect(toggleBorderLine(lines, "h:3:4")).toBe(false);
   expect(lines.has("h:3:4")).toBe(false);
+});
+
+test("toggling a decimal point adds it, then removes it", () => {
+  const points = new Set();
+
+  expect(toggleDecimalPoint(points, "2:3")).toBe(true);
+  expect(points.has("2:3")).toBe(true);
+  expect(toggleDecimalPoint(points, "2:3")).toBe(false);
+  expect(points.has("2:3")).toBe(false);
 });
 
 test("detects the decimal point hotspot and cell borders", () => {

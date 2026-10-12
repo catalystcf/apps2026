@@ -28,6 +28,16 @@ export function hasBorderAroundCell(lines, row, column) {
   );
 }
 
+export function toggleDecimalPoint(points, key) {
+  if (points.has(key)) {
+    points.delete(key);
+    return false;
+  }
+
+  points.add(key);
+  return true;
+}
+
 export function getBorderLine(row, column, edge, columnCount) {
   const cellIndex = row * columnCount + column;
 

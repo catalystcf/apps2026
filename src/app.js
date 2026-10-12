@@ -4,6 +4,7 @@ import {
   getCellBorderEdge,
   hasBorderAroundCell,
   isNearDecimalPoint,
+  toggleDecimalPoint,
   toggleBorderLine,
 } from "./cell-borders.js";
 
@@ -229,11 +230,17 @@ function renderCells() {
             return;
           }
 
-          decimalPoints.add(key);
-          cell.setAttribute("data-decimal", "true");
+          const enabled = toggleDecimalPoint(decimalPoints, key);
+          if (enabled) {
+            cell.setAttribute("data-decimal", "true");
+          } else {
+            cell.removeAttribute("data-decimal");
+          }
           cell.removeAttribute("data-hover-decimal");
           hoveredDecimal = null;
-          status.textContent = `Decimal point added to row ${row + 1}, column ${column + 1}`;
+          status.textContent = enabled
+            ? `Decimal point added to row ${row + 1}, column ${column + 1}`
+            : `Decimal point removed from row ${row + 1}, column ${column + 1}`;
           return;
         }
 
