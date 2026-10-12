@@ -9,9 +9,6 @@ import {
 
 const app = document.createElement("div");
 app.className = "app-shell";
-if (/Android/i.test(navigator.userAgent)) {
-  app.classList.add("app-shell--android");
-}
 
 const header = document.createElement("header");
 header.className = "app-header";
@@ -273,11 +270,7 @@ function updateActiveCell(keyDefinition) {
   }
 
   if (keyDefinition.action === "decimal") {
-    toggleDecimalAtCell(
-      activePosition.row,
-      activePosition.column,
-      activeCell,
-    );
+    toggleDecimalAtCell(activePosition.row, activePosition.column, activeCell);
     return;
   }
 
