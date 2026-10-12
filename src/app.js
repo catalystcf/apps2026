@@ -6,6 +6,7 @@ import {
   toggleDecimalPoint,
   toggleBorderLine,
 } from "./cell-borders.js";
+import { getCarrySlotRect, getNextCarryValue, getSplatPath } from "./carry.js";
 
 const app = document.createElement("div");
 app.className = "app-shell";
@@ -41,14 +42,127 @@ let columnCount = 8;
 const cellValues = new Map();
 const borderLines = new Set();
 const decimalPoints = new Set();
+const carryValues = new Map();
 let activeCell = null;
+let entryTarget = "cell";
 let activePosition = null;
 let followPointerAfterKeyboard = false;
+let selectedByPointerFollow = false;
 let hoveredBorder = null;
 let hoveredDecimal = null;
 
 function getCellKey(row, column) {
   return `${row}:${column}`;
+}
+
+const svgNamespace = "http://www.w3.org/2000/svg";
+const splat = document.createElementNS(svgNamespace, "svg");
+splat.classList.add("selection-splat");
+splat.setAttribute("aria-hidden", "true");
+const splatDim = document.createElementNS(svgNamespace, "path");
+splatDim.classList.add("selection-splat-dim");
+splatDim.setAttribute("fill-rule", "evenodd");
+const splatOutline = document.createElementNS(svgNamespace, "path");
+splatOutline.classList.add("selection-splat-outline");
+splat.append(splatDim, splatOutline);
+
+const carryEditor = document.createElement("button");
+carryEditor.type = "button";
+carryEditor.className = "carry-editor";
+const carrySlots = [0, 1].map(() => {
+  const slot = document.createElement("span");
+  slot.className = "carry-slot";
+  return slot;
+});
+carryEditor.append(...carrySlots);
+carryEditor.addEventListener("click", () => {
+  if (activePosition) {
+    setEntryTarget("carry");
+  }
+});
+
+function getCellLabel(row, column) {
+  const key = getCellKey(row, column);
+  const value = cellValues.get(key);
+  const carry = carryValues.get(key);
+  return `Row ${row + 1}, column ${column + 1}, ${value || "empty"}${
+    carry ? `, carry ${carry}` : ""
+  }`;
+}
+
+function getCellRect(cell) {
+  return {
+    x: cell.offsetLeft,
+    y: cell.offsetTop,
+    width: cell.offsetWidth,
+    height: cell.offsetHeight,
+  };
+}
+
+function updateSplat() {
+  grid.toggleAttribute("data-selecting", Boolean(activeCell));
+  grid.toggleAttribute("data-carry-entry", entryTarget === "carry");
+  if (!activeCell || !activePosition) {
+    return;
+  }
+
+  const lastCell = grid.children[rowCount * columnCount - 1];
+  const width = lastCell.offsetLeft + lastCell.offsetWidth;
+  const height = lastCell.offsetTop + lastCell.offsetHeight;
+  const cellRect = getCellRect(activeCell);
+  const blob = getSplatPath(cellRect);
+  splat.setAttribute("width", width);
+  splat.setAttribute("height", height);
+  splat.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  splatDim.setAttribute("d", `M0 0 H${width} V${height} H0 Z ${blob}`);
+  splatOutline.setAttribute("d", blob);
+
+  const carry = carryValues.get(
+    getCellKey(activePosition.row, activePosition.column),
+  );
+  const slotRect = getCarrySlotRect(cellRect);
+  Object.assign(carryEditor.style, {
+    left: `${slotRect.x}px`,
+    top: `${slotRect.y}px`,
+    width: `${slotRect.width}px`,
+    height: `${slotRect.height}px`,
+  });
+  carrySlots.forEach((slot, index) => {
+    slot.textContent = carry?.[index] ?? "";
+  });
+  // A filled-in carry shrinks to its small badge on the cell until it is
+  // tapped again; an empty one keeps showing the placeholder to tap.
+  carryEditor.hidden = entryTarget !== "carry" && Boolean(carry);
+  carryEditor.setAttribute(
+    "aria-label",
+    carry ? `Edit carry ${carry}` : "Add carry or borrow",
+  );
+}
+
+function setEntryTarget(target) {
+  entryTarget = target;
+  updateSplat();
+  if (activePosition) {
+    const position = `row ${activePosition.row + 1}, column ${activePosition.column + 1}`;
+    status.textContent =
+      target === "carry"
+        ? `Enter carry for ${position}`
+        : `Row ${activePosition.row + 1}, column ${activePosition.column + 1} selected`;
+  }
+}
+
+function clearSelection() {
+  activeCell?.setAttribute("aria-pressed", "false");
+  activeCell?.blur();
+  activeCell = null;
+  activePosition = null;
+  entryTarget = "cell";
+  followPointerAfterKeyboard = false;
+  keypad.querySelectorAll("button").forEach((keyButton) => {
+    keyButton.disabled = true;
+  });
+  updateSplat();
+  status.textContent = "Select a cell to start";
 }
 
 function clearHoveredBorder() {
@@ -116,6 +230,8 @@ function selectCell(
   activeCell?.setAttribute("aria-pressed", "false");
   activeCell = cell;
   activePosition = { row, column };
+  entryTarget = "cell";
+  selectedByPointerFollow = !stopPointerFollowing;
   if (stopPointerFollowing) {
     followPointerAfterKeyboard = false;
   }
@@ -123,6 +239,8 @@ function selectCell(
   keypad.querySelectorAll("button").forEach((keyButton) => {
     keyButton.disabled = false;
   });
+
+  updateSplat();
 
   if (announce) {
     status.textContent = `Row ${row + 1}, column ${column + 1} selected`;
@@ -180,17 +298,18 @@ function renderCells() {
       const decimalPoint = document.createElement("span");
       decimalPoint.className = "cell-decimal";
       decimalPoint.setAttribute("aria-hidden", "true");
-      cell.append(...borderSegments, cellValue, decimalPoint);
+      const carryBadge = document.createElement("span");
+      carryBadge.className = "cell-carry";
+      carryBadge.setAttribute("aria-hidden", "true");
+      carryBadge.textContent = carryValues.get(key) ?? "";
+      cell.append(...borderSegments, cellValue, decimalPoint, carryBadge);
       cell.setAttribute(
         "aria-pressed",
         activePosition?.row === row && activePosition?.column === column
           ? "true"
           : "false",
       );
-      cell.setAttribute(
-        "aria-label",
-        `Row ${row + 1}, column ${column + 1}, ${value || "empty"}`,
-      );
+      cell.setAttribute("aria-label", getCellLabel(row, column));
       if (decimalPoints.has(key)) {
         cell.setAttribute("data-decimal", "true");
       }
@@ -217,6 +336,15 @@ function renderCells() {
         clearHoveredDecimal();
       });
       cell.addEventListener("click", (event) => {
+        const isActive = activeCell === cell;
+        if (event.target.closest(".cell-carry") && carryBadge.textContent) {
+          if (!isActive) {
+            selectCell(cell, row, column);
+          }
+          setEntryTarget("carry");
+          return;
+        }
+
         const edge = getCellBorderEdge(
           event.clientX,
           event.clientY,
@@ -257,15 +385,58 @@ function renderCells() {
           return;
         }
 
+        if (isActive && entryTarget === "carry") {
+          setEntryTarget("cell");
+          return;
+        }
+
+        // A cell reached by the pointer following the keyboard is not a
+        // second tap, so it stays selected instead of closing the splat.
+        if (isActive && !selectedByPointerFollow) {
+          clearSelection();
+          return;
+        }
+
         selectCell(cell, row, column);
       });
       grid.append(cell);
     }
   }
+
+  grid.append(splat, carryEditor);
+  updateSplat();
+}
+
+function updateActiveCarry(keyDefinition) {
+  const cellKey = getCellKey(activePosition.row, activePosition.column);
+  const currentValue = carryValues.get(cellKey) ?? "";
+  const nextValue = getNextCarryValue(currentValue, keyDefinition);
+
+  if (nextValue) {
+    carryValues.set(cellKey, nextValue);
+  } else {
+    carryValues.delete(cellKey);
+  }
+
+  activeCell.querySelector(".cell-carry").textContent = nextValue;
+  activeCell.setAttribute(
+    "aria-label",
+    getCellLabel(activePosition.row, activePosition.column),
+  );
+  updateSplat();
+  const position = `row ${activePosition.row + 1}, column ${activePosition.column + 1}`;
+  status.textContent = nextValue
+    ? `Carry ${nextValue} in ${position}`
+    : `Carry cleared in ${position}`;
 }
 
 function updateActiveCell(keyDefinition) {
   if (!activePosition || !activeCell) {
+    return;
+  }
+
+  if (entryTarget === "carry") {
+    updateActiveCarry(keyDefinition);
     return;
   }
 
@@ -289,7 +460,7 @@ function updateActiveCell(keyDefinition) {
   const column = activePosition.column + 1;
   activeCell.setAttribute(
     "aria-label",
-    `Row ${row}, column ${column}, ${nextValue || "empty"}`,
+    getCellLabel(activePosition.row, activePosition.column),
   );
   status.textContent = nextValue
     ? `Entered ${nextValue} in row ${row}, column ${column}`
@@ -309,6 +480,16 @@ document.addEventListener("keydown", (event) => {
     return;
   }
 
+  if (event.key === "Escape" && activeCell) {
+    event.preventDefault();
+    if (entryTarget === "carry") {
+      setEntryTarget("cell");
+    } else {
+      clearSelection();
+    }
+    return;
+  }
+
   const keyDefinition = getKeyboardKeyDefinition(event.key);
   if (!keyDefinition || !activeCell) {
     return;
@@ -316,7 +497,7 @@ document.addEventListener("keydown", (event) => {
 
   event.preventDefault();
   updateActiveCell(keyDefinition);
-  followPointerAfterKeyboard = true;
+  followPointerAfterKeyboard = entryTarget === "cell";
 });
 
 worksheet.append(grid);
