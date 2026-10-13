@@ -147,6 +147,74 @@
         background: #d6dee7;
         gap: 1px;
         overscroll-behavior: contain;
+        position: relative;
+        isolation: isolate;
+      }
+
+      .selection-splat {
+        position: absolute;
+        z-index: 5;
+        top: 0;
+        left: 0;
+        display: none;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
+      .worksheet-grid[data-selecting] .selection-splat {
+        display: block;
+      }
+
+      .selection-splat-dim {
+        fill: rgb(100 116 139 / 45%);
+      }
+
+      .selection-splat-outline {
+        fill: none;
+        stroke: #3b8ee8;
+        stroke-width: 3;
+        stroke-linejoin: round;
+      }
+
+      .carry-editor {
+        position: absolute;
+        z-index: 6;
+        display: none;
+        gap: 2px;
+        padding: 2px;
+        border: 0;
+        border-radius: 0.375rem;
+        background: transparent;
+        color: #374151;
+        font: inherit;
+        font-size: 0.875rem;
+        cursor: pointer;
+      }
+
+      .worksheet-grid[data-selecting] .carry-editor:not([hidden]) {
+        display: flex;
+      }
+
+      .carry-slot {
+        display: grid;
+        flex: 1;
+        place-items: center;
+        border: 2px solid #3b8ee8;
+        border-radius: 0.25rem;
+        background: rgb(255 255 255 / 70%);
+      }
+
+      .carry-slot:empty {
+        border-style: dashed;
+      }
+
+      .worksheet-grid[data-carry-entry] .carry-editor {
+        outline: 2px solid #dc2626;
+        outline-offset: 1px;
+      }
+
+      .worksheet-grid[data-carry-entry] .carry-slot {
+        background: #fff;
       }
 
       .worksheet-cell {
@@ -239,6 +307,30 @@
         border-radius: 50%;
         background: transparent;
         pointer-events: none;
+      }
+
+      .cell-carry {
+        position: absolute;
+        z-index: 3;
+        top: 0;
+        left: 50%;
+        padding: 0 0.15rem;
+        transform: translate(-50%, -50%);
+        border-radius: 0.2rem;
+        background: rgb(255 255 255 / 70%);
+        color: #374151;
+        font-size: 0.6875rem;
+        line-height: 1.2;
+      }
+
+      .cell-carry:empty {
+        display: none;
+      }
+
+      .worksheet-grid[data-carry-entry]
+        .worksheet-cell[aria-pressed="true"]
+        .cell-carry {
+        display: none;
       }
 
       .worksheet-cell[data-hover-decimal="true"] .cell-decimal {

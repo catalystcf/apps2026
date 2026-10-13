@@ -1,6 +1,7 @@
 # Example commands
 
 npm run format:check
+
 npx prettier --check .
 
 npx prettier --write .
