@@ -159,16 +159,23 @@ function setEntryTarget(target) {
   }
 }
 
+function setCellEntryKeysEnabled(enabled) {
+  keyboard
+    .querySelectorAll(".keypad .key, .keypad-footer .key:not(.key--handwriting)")
+    .forEach((keyButton) => {
+      keyButton.disabled = !enabled;
+    });
+}
+
 function clearSelection() {
+  setHandwritingMode(false);
   activeCell?.setAttribute("aria-pressed", "false");
   activeCell?.blur();
   activeCell = null;
   activePosition = null;
   entryTarget = "cell";
   followPointerAfterKeyboard = false;
-  keypad.querySelectorAll("button").forEach((keyButton) => {
-    keyButton.disabled = true;
-  });
+  setCellEntryKeysEnabled(false);
   updateSplat();
   status.textContent = "Select a cell to start";
 }
@@ -244,9 +251,7 @@ function selectCell(
     followPointerAfterKeyboard = false;
   }
   activeCell.setAttribute("aria-pressed", "true");
-  keypad.querySelectorAll("button").forEach((keyButton) => {
-    keyButton.disabled = false;
-  });
+  setCellEntryKeysEnabled(true);
 
   updateSplat();
 
@@ -439,6 +444,7 @@ function updateActiveCarry(keyDefinition) {
 }
 
 function clearWorksheet() {
+  setHandwritingMode(false);
   cellValues.clear();
   borderLines.clear();
   decimalPoints.clear();
@@ -447,9 +453,7 @@ function clearWorksheet() {
   clearHoveredBorder();
   clearHoveredDecimal();
   renderCells();
-  keypad.querySelectorAll("button").forEach((keyButton) => {
-    keyButton.disabled = true;
-  });
+  setCellEntryKeysEnabled(false);
   status.textContent = "Worksheet cleared";
 }
 
@@ -536,6 +540,28 @@ keypad.className = "keypad";
 keypad.setAttribute("role", "group");
 keypad.setAttribute("aria-label", "Virtual number and operator keyboard");
 
+const handwritingPanel = document.createElement("div");
+handwritingPanel.className = "handwriting-panel";
+handwritingPanel.hidden = true;
+handwritingPanel.setAttribute("aria-label", "Handwriting drawing pad");
+
+const handwritingCanvas = document.createElement("canvas");
+handwritingCanvas.className = "handwriting-canvas";
+handwritingCanvas.setAttribute("aria-label", "Drawing surface for one character");
+handwritingCanvas.setAttribute("role", "img");
+
+const handwritingControls = document.createElement("div");
+handwritingControls.className = "handwriting-controls";
+
+const clearDrawingButton = document.createElement("button");
+clearDrawingButton.className = "key key--clear handwriting-control";
+clearDrawingButton.type = "button";
+clearDrawingButton.textContent = "Clear";
+
+handwritingControls.append(clearDrawingButton);
+handwritingPanel.append(handwritingCanvas);
+handwritingControls.hidden = true;
+
 const keys = [
   { label: "7", value: "7" },
   { label: "8", value: "8" },
@@ -552,9 +578,36 @@ const keys = [
   { label: "0", value: "0", zero: true },
   { label: ".", action: "decimal" },
   { label: "+", value: "+", operator: true },
-  { label: "=", value: "=", equals: true },
-  { label: "Clear", action: "clear" },
 ];
+
+const keypadFooter = document.createElement("div");
+keypadFooter.className = "keypad-footer";
+
+const equalsButton = document.createElement("button");
+equalsButton.className = "key key--equals";
+equalsButton.type = "button";
+equalsButton.disabled = true;
+equalsButton.setAttribute("aria-label", "=");
+equalsButton.textContent = "=";
+equalsButton.addEventListener("click", () => {
+  updateActiveCell({ value: "=" });
+});
+
+const clearCellButton = document.createElement("button");
+clearCellButton.className = "key key--clear";
+clearCellButton.type = "button";
+clearCellButton.disabled = true;
+clearCellButton.setAttribute("aria-label", "Clear");
+clearCellButton.textContent = "Clear";
+clearCellButton.addEventListener("click", () => {
+  updateActiveCell({ action: "clear" });
+});
+
+const handwritingButton = document.createElement("button");
+handwritingButton.className = "key key--handwriting";
+handwritingButton.type = "button";
+handwritingButton.setAttribute("aria-controls", "handwriting-panel");
+handwritingButton.setAttribute("aria-expanded", "false");
 
 for (const keyDefinition of keys) {
   const key = document.createElement("button");
@@ -571,14 +624,6 @@ for (const keyDefinition of keys) {
     key.classList.add("key--zero");
   }
 
-  if (keyDefinition.equals) {
-    key.classList.add("key--equals");
-  }
-
-  if (keyDefinition.action === "clear") {
-    key.classList.add("key--clear");
-  }
-
   key.textContent = keyDefinition.label;
   key.addEventListener("click", () => {
     updateActiveCell(keyDefinition);
@@ -586,10 +631,135 @@ for (const keyDefinition of keys) {
   keypad.append(key);
 }
 
-keyboard.append(keypad);
+keypadFooter.append(equalsButton, clearCellButton, handwritingButton);
+handwritingPanel.id = "handwriting-panel";
+keyboard.append(keypad, keypadFooter, handwritingPanel, handwritingControls);
 workspace.append(worksheet, keyboard);
 app.append(header, workspace);
 document.body.append(app);
+
+function updateHandwritingButton(enabled) {
+  handwritingButton.setAttribute(
+    "aria-label",
+    enabled ? "Return to number keypad" : "Open handwriting pad",
+  );
+  handwritingButton.title = enabled ? "Return to number keypad" : "Open handwriting pad";
+  handwritingButton.innerHTML = enabled
+    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8m-4-4v4M7 8h2m2 0h2m2 0h2M7 12h2m2 0h2m2 0h2" /></svg>'
+    : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.1 2.1 0 0 0-4-4L4 16v4Z" /><path d="m13.5 6.5 4 4M3 4v4m-2-2h4" /></svg>';
+}
+
+handwritingButton.addEventListener("click", () => {
+  const openingPad = handwritingPanel.hidden;
+  setHandwritingMode(openingPad);
+  if (!openingPad) {
+    handwritingButton.focus();
+  }
+});
+
+function setHandwritingMode(enabled) {
+  keypad.hidden = enabled;
+  handwritingPanel.hidden = !enabled;
+  handwritingButton.setAttribute("aria-expanded", String(enabled));
+  keypadFooter.hidden = enabled;
+  handwritingControls.hidden = !enabled;
+  (enabled ? handwritingControls : keypadFooter).append(handwritingButton);
+  updateHandwritingButton(enabled);
+}
+
+setHandwritingMode(false);
+
+const drawingContext = handwritingCanvas.getContext("2d");
+if (!drawingContext) {
+  throw new Error("Unable to create a 2D context for the handwriting pad.");
+}
+
+const drawingStrokes = [];
+let activeDrawingStroke = null;
+let drawingPointerId = null;
+
+function redrawHandwriting() {
+  const bounds = handwritingCanvas.getBoundingClientRect();
+  if (bounds.width === 0 || bounds.height === 0) {
+    return;
+  }
+
+  drawingContext.clearRect(0, 0, bounds.width, bounds.height);
+  drawingContext.lineWidth = Math.max(3, Math.min(bounds.width, bounds.height) * 0.07);
+  drawingContext.lineCap = "round";
+  drawingContext.lineJoin = "round";
+  drawingContext.strokeStyle = "#263548";
+
+  for (const stroke of drawingStrokes) {
+    if (stroke.length === 0) {
+      continue;
+    }
+
+    drawingContext.beginPath();
+    drawingContext.moveTo(
+      stroke[0].x * bounds.width,
+      stroke[0].y * bounds.height,
+    );
+    for (const point of stroke.slice(1)) {
+      drawingContext.lineTo(point.x * bounds.width, point.y * bounds.height);
+    }
+    drawingContext.stroke();
+  }
+}
+
+function resizeHandwritingCanvas() {
+  const bounds = handwritingCanvas.getBoundingClientRect();
+  if (bounds.width === 0 || bounds.height === 0) {
+    return;
+  }
+
+  const pixelRatio = window.devicePixelRatio || 1;
+  handwritingCanvas.width = Math.round(bounds.width * pixelRatio);
+  handwritingCanvas.height = Math.round(bounds.height * pixelRatio);
+  drawingContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  redrawHandwriting();
+}
+
+function addDrawingPoint(event) {
+  const bounds = handwritingCanvas.getBoundingClientRect();
+  activeDrawingStroke.push({
+    x: Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width)),
+    y: Math.max(0, Math.min(1, (event.clientY - bounds.top) / bounds.height)),
+  });
+  redrawHandwriting();
+}
+
+handwritingCanvas.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  drawingPointerId = event.pointerId;
+  activeDrawingStroke = [];
+  drawingStrokes.push(activeDrawingStroke);
+  handwritingCanvas.setPointerCapture(event.pointerId);
+  addDrawingPoint(event);
+});
+handwritingCanvas.addEventListener("pointermove", (event) => {
+  if (event.pointerId === drawingPointerId && activeDrawingStroke) {
+    addDrawingPoint(event);
+  }
+});
+function finishDrawingStroke(event) {
+  if (event.pointerId === drawingPointerId) {
+    activeDrawingStroke = null;
+    drawingPointerId = null;
+  }
+}
+handwritingCanvas.addEventListener("pointerup", finishDrawingStroke);
+handwritingCanvas.addEventListener("pointercancel", finishDrawingStroke);
+clearDrawingButton.addEventListener("click", () => {
+  drawingStrokes.length = 0;
+  activeDrawingStroke = null;
+  drawingPointerId = null;
+  redrawHandwriting();
+});
+
+const handwritingResizeObserver = new ResizeObserver(resizeHandwritingCanvas);
+handwritingResizeObserver.observe(handwritingCanvas);
+window.addEventListener("resize", resizeHandwritingCanvas);
 
 function updateGridSize() {
   const styles = getComputedStyle(grid);

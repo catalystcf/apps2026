@@ -14,7 +14,7 @@ Createa javascript component that acts like a math worksheet
 
 Provides a way to use it as a math worksheet.
 User can click on a cell and an entry window opens below
-Either an on-screen keyboard (numbers, operations) or in phase 2 an pad for handwriting recongintion of one character at a time.
+An on-screen keyboard for numbers and operations, with an optional drawing pad for one character at a time (handwriting recognition is not implemented).
 clicking on a border - creates a border (to create a line for substraction or a vertical bar for division grid)
 Clicking where a decimal dot would be - decimal
 clicking on a full cell expands the row so that there is a space for carry over

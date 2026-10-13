@@ -355,14 +355,16 @@
       }
 
       .worksheet-cell:focus-visible,
-      .key:focus-visible {
+      .key:focus-visible,
+      .handwriting-control:focus-visible {
         z-index: 2;
         outline: 2px solid #dc2626;
         outline-offset: -2px;
       }
 
       .worksheet-cell,
-      .key {
+      .key,
+      .handwriting-control {
         cursor: pointer;
       }
 
@@ -371,7 +373,15 @@
         flex: 1;
         min-height: 0;
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        grid-template-rows: repeat(5, minmax(0, 1fr));
+        grid-template-rows: repeat(4, minmax(0, 1fr));
+        gap: clamp(0.25rem, 1vw, 0.5rem);
+      }
+
+      .keypad-footer,
+      .handwriting-controls {
+        display: grid;
+        flex: 0 0 auto;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: clamp(0.25rem, 1vw, 0.5rem);
       }
 
@@ -412,19 +422,64 @@
       }
 
       .key--equals {
-        grid-column: span 2;
         border-color: #286646;
         background: #286646;
         color: #fff;
+      }
+
+      .keypad-footer .key--equals {
+        grid-column: span 2;
+      }
+
+      .key--clear {
+        font-size: clamp(0.875rem, 2.5vw, 1rem);
+      }
+
+      .handwriting-controls .handwriting-control {
+        grid-column: span 3;
       }
 
       .key--zero {
         grid-column: span 2;
       }
 
-      .key--clear {
-        grid-column: span 2;
-        font-size: clamp(0.875rem, 2.5vw, 1rem);
+      .key--handwriting svg {
+        width: 1.4rem;
+        height: 1.4rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.8;
+      }
+
+      .keypad[hidden],
+      .keypad-footer[hidden],
+      .handwriting-panel[hidden],
+      .handwriting-controls[hidden] {
+        display: none;
+      }
+
+      .handwriting-panel {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+        flex-direction: column;
+      }
+
+      .handwriting-canvas {
+        display: block;
+        width: 100%;
+        flex: 1;
+        min-height: 0;
+        border: 1px solid #d6dee7;
+        border-radius: 0.625rem;
+        background: #fff;
+        touch-action: none;
+      }
+
+      .handwriting-control {
+        grid-column: span 3;
       }
 
       @media (max-width: 640px) {
