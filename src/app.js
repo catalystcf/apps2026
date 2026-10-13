@@ -160,11 +160,11 @@ function setEntryTarget(target) {
 }
 
 function setCellEntryKeysEnabled(enabled) {
-  keyboard
-    .querySelectorAll(".keypad .key, .keypad-footer .key:not(.key--handwriting)")
-    .forEach((keyButton) => {
-      keyButton.disabled = !enabled;
-    });
+  keypad.querySelectorAll(".key").forEach((keyButton) => {
+    keyButton.disabled = !enabled;
+  });
+  equalsButton.disabled = !enabled || !handwritingPanel.hidden;
+  clearCellButton.disabled = !enabled && handwritingPanel.hidden;
 }
 
 function clearSelection() {
@@ -550,17 +550,7 @@ handwritingCanvas.className = "handwriting-canvas";
 handwritingCanvas.setAttribute("aria-label", "Drawing surface for one character");
 handwritingCanvas.setAttribute("role", "img");
 
-const handwritingControls = document.createElement("div");
-handwritingControls.className = "handwriting-controls";
-
-const clearDrawingButton = document.createElement("button");
-clearDrawingButton.className = "key key--clear handwriting-control";
-clearDrawingButton.type = "button";
-clearDrawingButton.textContent = "Clear";
-
-handwritingControls.append(clearDrawingButton);
 handwritingPanel.append(handwritingCanvas);
-handwritingControls.hidden = true;
 
 const keys = [
   { label: "7", value: "7" },
@@ -600,7 +590,15 @@ clearCellButton.disabled = true;
 clearCellButton.setAttribute("aria-label", "Clear");
 clearCellButton.textContent = "Clear";
 clearCellButton.addEventListener("click", () => {
-  updateActiveCell({ action: "clear" });
+  if (handwritingPanel.hidden) {
+    updateActiveCell({ action: "clear" });
+    return;
+  }
+
+  drawingStrokes.length = 0;
+  activeDrawingStroke = null;
+  drawingPointerId = null;
+  redrawHandwriting();
 });
 
 const handwritingButton = document.createElement("button");
@@ -633,7 +631,7 @@ for (const keyDefinition of keys) {
 
 keypadFooter.append(equalsButton, clearCellButton, handwritingButton);
 handwritingPanel.id = "handwriting-panel";
-keyboard.append(keypad, keypadFooter, handwritingPanel, handwritingControls);
+keyboard.append(keypad, keypadFooter, handwritingPanel);
 workspace.append(worksheet, keyboard);
 app.append(header, workspace);
 document.body.append(app);
@@ -661,9 +659,12 @@ function setHandwritingMode(enabled) {
   keypad.hidden = enabled;
   handwritingPanel.hidden = !enabled;
   handwritingButton.setAttribute("aria-expanded", String(enabled));
-  keypadFooter.hidden = enabled;
-  handwritingControls.hidden = !enabled;
-  (enabled ? handwritingControls : keypadFooter).append(handwritingButton);
+  equalsButton.classList.toggle("key--placeholder", enabled);
+  clearCellButton.setAttribute(
+    "aria-label",
+    enabled ? "Clear drawing" : "Clear selected cell",
+  );
+  setCellEntryKeysEnabled(Boolean(activeCell));
   updateHandwritingButton(enabled);
 }
 
@@ -750,12 +751,6 @@ function finishDrawingStroke(event) {
 }
 handwritingCanvas.addEventListener("pointerup", finishDrawingStroke);
 handwritingCanvas.addEventListener("pointercancel", finishDrawingStroke);
-clearDrawingButton.addEventListener("click", () => {
-  drawingStrokes.length = 0;
-  activeDrawingStroke = null;
-  drawingPointerId = null;
-  redrawHandwriting();
-});
 
 const handwritingResizeObserver = new ResizeObserver(resizeHandwritingCanvas);
 handwritingResizeObserver.observe(handwritingCanvas);
