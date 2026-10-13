@@ -551,8 +551,8 @@ const keys = [
   { label: "-", value: "-", operator: true },
   { label: "0", value: "0", zero: true },
   { label: ".", action: "decimal" },
-  { label: "=", value: "=", equals: true },
   { label: "+", value: "+", operator: true },
+  { label: "=", value: "=", equals: true },
   { label: "Clear", action: "clear" },
 ];
 
@@ -575,8 +575,8 @@ for (const keyDefinition of keys) {
     key.classList.add("key--equals");
   }
 
-  if (keyDefinition.action) {
-    key.classList.add("key--action");
+  if (keyDefinition.action === "clear") {
+    key.classList.add("key--clear");
   }
 
   key.textContent = keyDefinition.label;

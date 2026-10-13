@@ -377,7 +377,8 @@
 
       .keyboard-panel {
         display: flex;
-        width: 100%;
+        width: min(100%, 24rem);
+        align-self: center;
         height: min(33dvh, 16rem);
         max-height: 33dvh;
         flex: 0 0 min(33dvh, 16rem);
@@ -411,6 +412,7 @@
       }
 
       .key--equals {
+        grid-column: span 2;
         border-color: #286646;
         background: #286646;
         color: #fff;
@@ -420,8 +422,8 @@
         grid-column: span 2;
       }
 
-      .key--action {
-        grid-column: span 4;
+      .key--clear {
+        grid-column: span 2;
         font-size: clamp(0.875rem, 2.5vw, 1rem);
       }
 
