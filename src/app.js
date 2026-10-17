@@ -7,6 +7,10 @@ import {
   toggleBorderLine,
 } from "./cell-borders.js";
 import { getCarrySlotRect, getNextCarryValue, getSplatPath } from "./carry.js";
+import {
+  mathOptions,
+  toggleMathOption,
+} from "./math-options.js";
 
 const app = document.createElement("div");
 app.className = "app-shell";
@@ -31,7 +35,181 @@ clearButton.title = "Clear worksheet";
 clearButton.innerHTML =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3" /></svg>';
 
-header.append(title, status, clearButton);
+// Selected math options will decide what is shown around a clicked cell.
+const selectedMathOptions = new Set();
+const longHoverDelay = 600;
+
+const titleGroup = document.createElement("div");
+titleGroup.className = "app-title-group";
+
+const optionsMenu = document.createElement("div");
+optionsMenu.className = "math-options";
+
+const optionsToggle = document.createElement("button");
+optionsToggle.className = "math-options-toggle";
+optionsToggle.type = "button";
+optionsToggle.setAttribute("aria-haspopup", "true");
+optionsToggle.setAttribute("aria-expanded", "false");
+optionsToggle.setAttribute("aria-controls", "math-options-list");
+
+const optionsList = document.createElement("div");
+optionsList.className = "math-options-list";
+optionsList.id = "math-options-list";
+optionsList.setAttribute("role", "menu");
+optionsList.setAttribute("aria-label", "Math options");
+optionsList.hidden = true;
+
+function createOptionIcon(option) {
+  const icon = document.createElement("span");
+  icon.className = `math-option-icon math-option-icon--${option.id}`;
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = option.label;
+  return icon;
+}
+
+function updateOptionsToggle() {
+  const caret = document.createElement("span");
+  caret.className = "math-options-caret";
+  caret.setAttribute("aria-hidden", "true");
+  caret.textContent = "\u25BE";
+  optionsToggle.replaceChildren(caret);
+  optionsToggle.setAttribute("aria-label", "Math options");
+}
+
+const selectedOptionButton = document.createElement("div");
+selectedOptionButton.className = "math-options-selected";
+selectedOptionButton.hidden = true;
+
+function setOptionsOpen(open) {
+  optionsList.hidden = !open;
+  optionsToggle.setAttribute("aria-expanded", String(open));
+}
+
+function updateOptionSelection() {
+  optionButtons.forEach((button) => {
+    const selected = selectedMathOptions.has(button.dataset.option);
+    button.setAttribute("aria-checked", String(selected));
+  });
+  const selectedOptions = mathOptions.filter((option) =>
+    selectedMathOptions.has(option.id),
+  );
+  selectedOptionButton.hidden = selectedOptions.length === 0;
+  selectedOptionButton.replaceChildren(
+    ...selectedOptions.map((option) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.setAttribute("aria-pressed", "true");
+      button.setAttribute(
+        "aria-label",
+        `${option.description} selected; click to turn off`,
+      );
+      button.append(createOptionIcon(option));
+      button.addEventListener("click", () => {
+        selectedMathOptions.delete(option.id);
+        updateOptionSelection();
+        status.textContent = `${option.description} turned off`;
+      });
+      return button;
+    }),
+  );
+  updateOptionsToggle();
+}
+
+const optionButtons = mathOptions.map((option) => {
+  const optionButton = document.createElement("button");
+  optionButton.className = "math-option";
+  optionButton.type = "button";
+  optionButton.setAttribute("role", "menuitemcheckbox");
+  optionButton.setAttribute("aria-checked", "false");
+  optionButton.setAttribute("aria-label", option.description);
+  optionButton.dataset.option = option.id;
+
+  const description = document.createElement("span");
+  description.className = "math-option-description";
+  description.setAttribute("role", "tooltip");
+  description.textContent = option.description;
+
+  optionButton.append(createOptionIcon(option), description);
+
+  // The description only appears after a long hover (or long press on touch).
+  let hoverTimer = null;
+  let suppressClick = false;
+  const showDescription = () => {
+    optionButton.setAttribute("data-show-description", "true");
+  };
+  const hideDescription = () => {
+    clearTimeout(hoverTimer);
+    hoverTimer = null;
+    optionButton.removeAttribute("data-show-description");
+  };
+
+  optionButton.addEventListener("pointerenter", (event) => {
+    if (event.pointerType === "mouse") {
+      hoverTimer = setTimeout(showDescription, longHoverDelay);
+    }
+  });
+  optionButton.addEventListener("pointerdown", (event) => {
+    suppressClick = false;
+    if (event.pointerType !== "mouse") {
+      clearTimeout(hoverTimer);
+      hoverTimer = setTimeout(() => {
+        showDescription();
+        suppressClick = true;
+      }, longHoverDelay);
+    }
+  });
+  optionButton.addEventListener("pointerup", (event) => {
+    if (event.pointerType !== "mouse") {
+      clearTimeout(hoverTimer);
+    }
+  });
+  optionButton.addEventListener("pointerleave", hideDescription);
+  optionButton.addEventListener("pointercancel", hideDescription);
+  optionButton.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+  });
+  optionButton.addEventListener("click", () => {
+    if (suppressClick) {
+      suppressClick = false;
+      hideDescription();
+      return;
+    }
+
+    hideDescription();
+    const wasSelected = selectedMathOptions.has(option.id);
+    const nextSelection = toggleMathOption(selectedMathOptions, option.id);
+    selectedMathOptions.clear();
+    nextSelection.forEach((id) => selectedMathOptions.add(id));
+    updateOptionSelection();
+    setOptionsOpen(false);
+    status.textContent = wasSelected
+      ? `${option.description} turned off`
+      : `${option.description} selected`;
+  });
+
+  return optionButton;
+});
+
+optionsList.append(...optionButtons);
+optionsToggle.addEventListener("click", () => {
+  setOptionsOpen(optionsList.hidden);
+});
+document.addEventListener("pointerdown", (event) => {
+  if (!optionsList.hidden && !optionsMenu.contains(event.target)) {
+    setOptionsOpen(false);
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !optionsList.hidden) {
+    setOptionsOpen(false);
+    optionsToggle.focus();
+  }
+});
+updateOptionSelection();
+
+optionsMenu.append(optionsToggle, selectedOptionButton, optionsList);
+titleGroup.append(title, optionsMenu);
+header.append(titleGroup, status, clearButton);
 
 const workspace = document.createElement("main");
 workspace.className = "workspace";
@@ -499,6 +677,7 @@ function updateActiveCell(keyDefinition) {
 document.addEventListener("keydown", (event) => {
   const target = event.target;
   if (
+    !optionsList.hidden ||
     event.ctrlKey ||
     event.metaKey ||
     event.altKey ||
@@ -565,9 +744,11 @@ const keys = [
   { label: "2", value: "2" },
   { label: "3", value: "3" },
   { label: "-", value: "-", operator: true },
-  { label: "0", value: "0", zero: true },
+  { label: "0", value: "0" },
   { label: ".", action: "decimal" },
   { label: "+", value: "+", operator: true },
+  { label: "(", value: "(", operator: true },
+  { label: ")", value: ")", operator: true },
 ];
 
 const keypadFooter = document.createElement("div");

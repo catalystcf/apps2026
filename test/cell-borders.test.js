@@ -15,6 +15,10 @@ test("detects a border edge only within the hit area", () => {
   expect(getCellBorderEdge(35, 14, rect)).toBe("top");
   expect(getCellBorderEdge(35, 16, rect)).toBeNull();
   expect(getCellBorderEdge(35, 35, rect)).toBeNull();
+  expect(getCellBorderEdge(50, 12, rect)).toBe("top");
+  expect(getCellBorderEdge(50, 15, rect)).toBe("top");
+  expect(getCellBorderEdge(50, 16, rect)).toBeNull();
+  expect(getCellBorderEdge(50, 30, rect)).toBeNull();
 });
 
 test("adjacent cells resolve to the same shared border", () => {

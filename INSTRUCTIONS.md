@@ -8,6 +8,8 @@ npx prettier --write .
 
 npm run build
 
+npm run test
+
 npx vite src --host 127.0.0.1
 
 # Lint and build setup
