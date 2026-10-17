@@ -7,9 +7,8 @@ import {
   toggleBorderLine,
 } from "./cell-borders.js";
 import {
-  getMathOption,
   mathOptions,
-  selectMathOption,
+  toggleMathOption,
 } from "./math-options.js";
 
 const app = document.createElement("div");
@@ -27,9 +26,8 @@ status.className = "app-status";
 status.setAttribute("aria-live", "polite");
 status.textContent = "Select a cell to start";
 
-// Which math option is active. Will decide what is shown around a cell when
-// it is clicked; for now it is only recorded.
-let selectedMathOption = null;
+// Selected math options will decide what is shown around a clicked cell.
+const selectedMathOptions = new Set();
 const longHoverDelay = 600;
 
 const titleGroup = document.createElement("div");
@@ -61,31 +59,58 @@ function createOptionIcon(option) {
 }
 
 function updateOptionsToggle() {
-  const option = getMathOption(selectedMathOption);
   const caret = document.createElement("span");
   caret.className = "math-options-caret";
   caret.setAttribute("aria-hidden", "true");
   caret.textContent = "\u25BE";
-  optionsToggle.replaceChildren(
-    option ? createOptionIcon(option) : "Options",
-    caret,
-  );
-  optionsToggle.setAttribute(
-    "aria-label",
-    `Math options${option ? `, ${option.description} selected` : ""}`,
-  );
+  optionsToggle.replaceChildren(caret);
+  optionsToggle.setAttribute("aria-label", "Math options");
 }
+
+const selectedOptionButton = document.createElement("div");
+selectedOptionButton.className = "math-options-selected";
+selectedOptionButton.hidden = true;
 
 function setOptionsOpen(open) {
   optionsList.hidden = !open;
   optionsToggle.setAttribute("aria-expanded", String(open));
 }
 
+function updateOptionSelection() {
+  optionButtons.forEach((button) => {
+    const selected = selectedMathOptions.has(button.dataset.option);
+    button.setAttribute("aria-checked", String(selected));
+  });
+  const selectedOptions = mathOptions.filter((option) =>
+    selectedMathOptions.has(option.id),
+  );
+  selectedOptionButton.hidden = selectedOptions.length === 0;
+  selectedOptionButton.replaceChildren(
+    ...selectedOptions.map((option) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.setAttribute("aria-pressed", "true");
+      button.setAttribute(
+        "aria-label",
+        `${option.description} selected; click to turn off`,
+      );
+      button.append(createOptionIcon(option));
+      button.addEventListener("click", () => {
+        selectedMathOptions.delete(option.id);
+        updateOptionSelection();
+        status.textContent = `${option.description} turned off`;
+      });
+      return button;
+    }),
+  );
+  updateOptionsToggle();
+}
+
 const optionButtons = mathOptions.map((option) => {
   const optionButton = document.createElement("button");
   optionButton.className = "math-option";
   optionButton.type = "button";
-  optionButton.setAttribute("role", "menuitemradio");
+  optionButton.setAttribute("role", "menuitemcheckbox");
   optionButton.setAttribute("aria-checked", "false");
   optionButton.setAttribute("aria-label", option.description);
   optionButton.dataset.option = option.id;
@@ -142,19 +167,15 @@ const optionButtons = mathOptions.map((option) => {
     }
 
     hideDescription();
-    selectedMathOption = selectMathOption(selectedMathOption, option.id);
-    optionButtons.forEach((button) => {
-      button.setAttribute(
-        "aria-checked",
-        String(button.dataset.option === selectedMathOption),
-      );
-    });
-    updateOptionsToggle();
+    const wasSelected = selectedMathOptions.has(option.id);
+    const nextSelection = toggleMathOption(selectedMathOptions, option.id);
+    selectedMathOptions.clear();
+    nextSelection.forEach((id) => selectedMathOptions.add(id));
+    updateOptionSelection();
     setOptionsOpen(false);
-    const selected = getMathOption(selectedMathOption);
-    status.textContent = selected
-      ? `${selected.description} selected`
-      : `${option.description} turned off`;
+    status.textContent = wasSelected
+      ? `${option.description} turned off`
+      : `${option.description} selected`;
   });
 
   return optionButton;
@@ -175,9 +196,9 @@ document.addEventListener("keydown", (event) => {
     optionsToggle.focus();
   }
 });
-updateOptionsToggle();
+updateOptionSelection();
 
-optionsMenu.append(optionsToggle, optionsList);
+optionsMenu.append(optionsToggle, selectedOptionButton, optionsList);
 titleGroup.append(title, optionsMenu);
 header.append(titleGroup, status);
 

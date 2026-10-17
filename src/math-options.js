@@ -7,11 +7,18 @@ export function getMathOption(id) {
   return mathOptions.find((option) => option.id === id) ?? null;
 }
 
-// Selecting the active option again turns it off.
-export function selectMathOption(currentId, nextId) {
+// Selecting an option toggles it without affecting the other selections.
+export function toggleMathOption(selectedIds, nextId) {
   if (!getMathOption(nextId)) {
-    return currentId;
+    return selectedIds;
   }
 
-  return currentId === nextId ? null : nextId;
+  const nextSelectedIds = new Set(selectedIds);
+  if (nextSelectedIds.has(nextId)) {
+    nextSelectedIds.delete(nextId);
+  } else {
+    nextSelectedIds.add(nextId);
+  }
+
+  return nextSelectedIds;
 }

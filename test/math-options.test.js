@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import {
   getMathOption,
   mathOptions,
-  selectMathOption,
+  toggleMathOption,
 } from "../src/math-options.js";
 
 test("offers fraction and carry/borrow options", () => {
@@ -14,14 +14,18 @@ test("offers fraction and carry/borrow options", () => {
 });
 
 test("selecting an option records it", () => {
-  expect(selectMathOption(null, "fraction")).toBe("fraction");
-  expect(selectMathOption("fraction", "carry-borrow")).toBe("carry-borrow");
+  expect(toggleMathOption(new Set(), "fraction")).toEqual(new Set(["fraction"]));
 });
 
-test("selecting the active option again clears it", () => {
-  expect(selectMathOption("fraction", "fraction")).toBeNull();
+test("options can be selected independently and toggled off", () => {
+  const selected = toggleMathOption(new Set(["fraction"]), "carry-borrow");
+  expect(selected).toEqual(new Set(["fraction", "carry-borrow"]));
+  expect(toggleMathOption(selected, "fraction")).toEqual(
+    new Set(["carry-borrow"]),
+  );
 });
 
 test("unknown options leave the selection unchanged", () => {
-  expect(selectMathOption("fraction", "nope")).toBe("fraction");
+  const selected = new Set(["fraction"]);
+  expect(toggleMathOption(selected, "nope")).toBe(selected);
 });
