@@ -12,7 +12,8 @@ test("detects a border edge only within the hit area", () => {
   const rect = { top: 10, right: 110, bottom: 60, left: 10 };
 
   expect(getCellBorderEdge(50, 12, rect)).toBe("top");
-  expect(getCellBorderEdge(50, 14, rect)).toBeNull();
+  expect(getCellBorderEdge(50, 15, rect)).toBe("top");
+  expect(getCellBorderEdge(50, 16, rect)).toBeNull();
   expect(getCellBorderEdge(50, 30, rect)).toBeNull();
 });
 
