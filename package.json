@@ -8,6 +8,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "screenshots": "node scripts/screenshot-keyboard.js",
     "build": "node -e \"const fs=require('fs');fs.rmSync('dist',{recursive:true,force:true});if(fs.existsSync('src'))fs.cpSync('src','dist',{recursive:true});else fs.mkdirSync('dist')\""
   },
   "devDependencies": {

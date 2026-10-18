@@ -270,8 +270,7 @@
         padding-top: 0.75rem;
       }
 
-      .worksheet-panel,
-      .keyboard-panel {
+      .worksheet-panel {
         min-width: 0;
         overflow: hidden;
         border: 1px solid #e1e7ed;
@@ -506,130 +505,14 @@
         background: #fff7f7;
       }
 
-      .worksheet-cell:focus-visible,
-      .key:focus-visible,
-      .handwriting-control:focus-visible {
+      .worksheet-cell:focus-visible {
         z-index: 2;
         outline: 2px solid #dc2626;
         outline-offset: -2px;
       }
 
-      .worksheet-cell,
-      .key,
-      .handwriting-control {
+      .worksheet-cell {
         cursor: pointer;
-      }
-
-      .keypad {
-        display: grid;
-        grid-row: 1 / span 4;
-        min-height: 0;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        grid-template-rows: repeat(4, minmax(0, 1fr));
-        gap: var(--keyboard-gap);
-      }
-
-      .keypad-footer {
-        display: grid;
-        grid-row: 5;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: var(--keyboard-gap);
-      }
-
-      .keyboard-panel {
-        display: grid;
-        --keyboard-gap: clamp(0.25rem, 1vw, 0.5rem);
-        width: min(100%, 24rem);
-        align-self: center;
-        height: min(33dvh, 16rem);
-        max-height: 33dvh;
-        flex: 0 0 min(33dvh, 16rem);
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: repeat(5, minmax(0, 1fr));
-        gap: var(--keyboard-gap);
-        padding: clamp(0.35rem, 1.5vw, 0.75rem);
-      }
-
-      .key {
-        display: grid;
-        min-width: 0;
-        place-items: center;
-        border: 1px solid #e1e7ed;
-        border-radius: 0.75rem;
-        background: #f8fafc;
-        color: #263548;
-        font-size: clamp(1.125rem, 3vw, 1.5rem);
-        font-weight: 550;
-        font-family: inherit;
-        user-select: none;
-      }
-
-      .key:disabled {
-        cursor: not-allowed;
-        opacity: 0.45;
-      }
-
-      .key--operator {
-        border-color: #d8e6df;
-        background: #eff6f2;
-        color: #276447;
-      }
-
-      .key--equals {
-        grid-column: span 2;
-        border-color: #286646;
-        background: #286646;
-        color: #fff;
-      }
-
-      .key--placeholder {
-        visibility: hidden;
-      }
-
-      .key--clear {
-        font-size: clamp(0.875rem, 2.5vw, 1rem);
-      }
-
-      .key--zero {
-        grid-column: span 2;
-      }
-
-      .key--handwriting svg {
-        width: 1.4rem;
-        height: 1.4rem;
-        fill: none;
-        stroke: currentColor;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        stroke-width: 1.8;
-      }
-
-      .keypad[hidden],
-      .handwriting-panel[hidden] {
-        display: none;
-      }
-
-      .handwriting-panel {
-        display: flex;
-        grid-row: 1 / span 4;
-        min-height: 0;
-        flex-direction: column;
-      }
-
-      .handwriting-canvas {
-        display: block;
-        width: 100%;
-        flex: 1;
-        min-height: 0;
-        border: 1px solid #d6dee7;
-        border-radius: 0.625rem;
-        background: #fff;
-        touch-action: none;
-      }
-
-      .key--action {
-        grid-column: span 2;
-        font-size: clamp(0.875rem, 2.5vw, 1rem);
       }
 
       @media (max-width: 640px) {
@@ -652,20 +535,15 @@
           flex: 1;
           padding: 0.875rem;
         }
-
-        .keyboard-panel {
-          padding: 0.4rem;
-        }
-
       }
 
       @media (max-width: 360px) {
         .app-status {
           font-size: 0.6875rem;
         }
-
       }
     </style>
+    <link rel="stylesheet" href="./keyboard.css" />
     <script type="module" src="./app.js"></script>
   </head>
   <body>

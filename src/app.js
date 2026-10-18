@@ -7,10 +7,8 @@ import {
   toggleBorderLine,
 } from "./cell-borders.js";
 import { getCarrySlotRect, getNextCarryValue, getSplatPath } from "./carry.js";
-import {
-  mathOptions,
-  toggleMathOption,
-} from "./math-options.js";
+import { mathOptions, toggleMathOption } from "./math-options.js";
+import { createKeyboard } from "./keyboard.js";
 
 const app = document.createElement("div");
 app.className = "app-shell";
@@ -337,23 +335,15 @@ function setEntryTarget(target) {
   }
 }
 
-function setCellEntryKeysEnabled(enabled) {
-  keypad.querySelectorAll(".key").forEach((keyButton) => {
-    keyButton.disabled = !enabled;
-  });
-  equalsButton.disabled = !enabled || !handwritingPanel.hidden;
-  clearCellButton.disabled = !enabled && handwritingPanel.hidden;
-}
-
 function clearSelection() {
-  setHandwritingMode(false);
+  keyboard.setHandwritingMode(false);
   activeCell?.setAttribute("aria-pressed", "false");
   activeCell?.blur();
   activeCell = null;
   activePosition = null;
   entryTarget = "cell";
   followPointerAfterKeyboard = false;
-  setCellEntryKeysEnabled(false);
+  keyboard.setEnabled(false);
   updateSplat();
   status.textContent = "Select a cell to start";
 }
@@ -429,7 +419,7 @@ function selectCell(
     followPointerAfterKeyboard = false;
   }
   activeCell.setAttribute("aria-pressed", "true");
-  setCellEntryKeysEnabled(true);
+  keyboard.setEnabled(true);
 
   updateSplat();
 
@@ -622,7 +612,7 @@ function updateActiveCarry(keyDefinition) {
 }
 
 function clearWorksheet() {
-  setHandwritingMode(false);
+  keyboard.setHandwritingMode(false);
   cellValues.clear();
   borderLines.clear();
   decimalPoints.clear();
@@ -631,7 +621,7 @@ function clearWorksheet() {
   clearHoveredBorder();
   clearHoveredDecimal();
   renderCells();
-  setCellEntryKeysEnabled(false);
+  keyboard.setEnabled(false);
   status.textContent = "Worksheet cleared";
 }
 
@@ -710,146 +700,28 @@ document.addEventListener("keydown", (event) => {
 
 worksheet.append(grid);
 
-const keyboard = document.createElement("section");
-keyboard.className = "keyboard-panel";
-keyboard.setAttribute("aria-label", "Virtual keyboard");
-
-const keypad = document.createElement("div");
-keypad.className = "keypad";
-keypad.setAttribute("role", "group");
-keypad.setAttribute("aria-label", "Virtual number and operator keyboard");
-
-const handwritingPanel = document.createElement("div");
-handwritingPanel.className = "handwriting-panel";
-handwritingPanel.hidden = true;
-handwritingPanel.setAttribute("aria-label", "Handwriting drawing pad");
-
 const handwritingCanvas = document.createElement("canvas");
 handwritingCanvas.className = "handwriting-canvas";
-handwritingCanvas.setAttribute("aria-label", "Drawing surface for one character");
+handwritingCanvas.setAttribute(
+  "aria-label",
+  "Drawing surface for one character",
+);
 handwritingCanvas.setAttribute("role", "img");
 
-handwritingPanel.append(handwritingCanvas);
-
-const keys = [
-  { label: "7", value: "7" },
-  { label: "8", value: "8" },
-  { label: "9", value: "9" },
-  { label: "/", value: "/", operator: true },
-  { label: "4", value: "4" },
-  { label: "5", value: "5" },
-  { label: "6", value: "6" },
-  { label: "*", value: "*", operator: true },
-  { label: "1", value: "1" },
-  { label: "2", value: "2" },
-  { label: "3", value: "3" },
-  { label: "-", value: "-", operator: true },
-  { label: "0", value: "0" },
-  { label: ".", action: "decimal" },
-  { label: "+", value: "+", operator: true },
-  { label: "(", value: "(", operator: true },
-  { label: ")", value: ")", operator: true },
-];
-
-const keypadFooter = document.createElement("div");
-keypadFooter.className = "keypad-footer";
-
-const equalsButton = document.createElement("button");
-equalsButton.className = "key key--equals";
-equalsButton.type = "button";
-equalsButton.disabled = true;
-equalsButton.setAttribute("aria-label", "=");
-equalsButton.textContent = "=";
-equalsButton.addEventListener("click", () => {
-  updateActiveCell({ value: "=" });
+const keyboard = createKeyboard({
+  onKey: updateActiveCell,
+  onClearDrawing: () => {
+    drawingStrokes.length = 0;
+    activeDrawingStroke = null;
+    drawingPointerId = null;
+    redrawHandwriting();
+  },
 });
+keyboard.handwritingPanel.append(handwritingCanvas);
 
-const clearCellButton = document.createElement("button");
-clearCellButton.className = "key key--clear";
-clearCellButton.type = "button";
-clearCellButton.disabled = true;
-clearCellButton.setAttribute("aria-label", "Clear");
-clearCellButton.textContent = "Clear";
-clearCellButton.addEventListener("click", () => {
-  if (handwritingPanel.hidden) {
-    updateActiveCell({ action: "clear" });
-    return;
-  }
-
-  drawingStrokes.length = 0;
-  activeDrawingStroke = null;
-  drawingPointerId = null;
-  redrawHandwriting();
-});
-
-const handwritingButton = document.createElement("button");
-handwritingButton.className = "key key--handwriting";
-handwritingButton.type = "button";
-handwritingButton.setAttribute("aria-controls", "handwriting-panel");
-handwritingButton.setAttribute("aria-expanded", "false");
-
-for (const keyDefinition of keys) {
-  const key = document.createElement("button");
-  key.className = "key";
-  key.type = "button";
-  key.disabled = true;
-  key.setAttribute("aria-label", keyDefinition.label);
-
-  if (keyDefinition.operator) {
-    key.classList.add("key--operator");
-  }
-
-  if (keyDefinition.zero) {
-    key.classList.add("key--zero");
-  }
-
-  key.textContent = keyDefinition.label;
-  key.addEventListener("click", () => {
-    updateActiveCell(keyDefinition);
-  });
-  keypad.append(key);
-}
-
-keypadFooter.append(equalsButton, clearCellButton, handwritingButton);
-handwritingPanel.id = "handwriting-panel";
-keyboard.append(keypad, keypadFooter, handwritingPanel);
-workspace.append(worksheet, keyboard);
+workspace.append(worksheet, keyboard.element);
 app.append(header, workspace);
 document.body.append(app);
-
-function updateHandwritingButton(enabled) {
-  handwritingButton.setAttribute(
-    "aria-label",
-    enabled ? "Return to number keypad" : "Open handwriting pad",
-  );
-  handwritingButton.title = enabled ? "Return to number keypad" : "Open handwriting pad";
-  handwritingButton.innerHTML = enabled
-    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8m-4-4v4M7 8h2m2 0h2m2 0h2M7 12h2m2 0h2m2 0h2" /></svg>'
-    : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.1 2.1 0 0 0-4-4L4 16v4Z" /><path d="m13.5 6.5 4 4M3 4v4m-2-2h4" /></svg>';
-}
-
-handwritingButton.addEventListener("click", () => {
-  const openingPad = handwritingPanel.hidden;
-  setHandwritingMode(openingPad);
-  if (!openingPad) {
-    handwritingButton.focus();
-  }
-});
-
-function setHandwritingMode(enabled) {
-  keypad.hidden = enabled;
-  handwritingPanel.hidden = !enabled;
-  handwritingButton.setAttribute("aria-expanded", String(enabled));
-  equalsButton.classList.toggle("key--placeholder", enabled);
-  clearCellButton.setAttribute(
-    "aria-label",
-    enabled ? "Clear drawing" : "Clear selected cell",
-  );
-  setCellEntryKeysEnabled(Boolean(activeCell));
-  updateHandwritingButton(enabled);
-}
-
-setHandwritingMode(false);
 
 const drawingContext = handwritingCanvas.getContext("2d");
 if (!drawingContext) {
@@ -867,7 +739,10 @@ function redrawHandwriting() {
   }
 
   drawingContext.clearRect(0, 0, bounds.width, bounds.height);
-  drawingContext.lineWidth = Math.max(3, Math.min(bounds.width, bounds.height) * 0.07);
+  drawingContext.lineWidth = Math.max(
+    3,
+    Math.min(bounds.width, bounds.height) * 0.07,
+  );
   drawingContext.lineCap = "round";
   drawingContext.lineJoin = "round";
   drawingContext.strokeStyle = "#263548";
