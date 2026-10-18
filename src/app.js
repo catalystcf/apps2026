@@ -105,6 +105,7 @@ function updateOptionSelection() {
       button.addEventListener("click", () => {
         selectedMathOptions.delete(option.id);
         updateOptionSelection();
+        updateCarryAvailability();
         status.textContent = `${option.description} turned off`;
       });
       return button;
@@ -179,6 +180,7 @@ const optionButtons = mathOptions.map((option) => {
     selectedMathOptions.clear();
     nextSelection.forEach((id) => selectedMathOptions.add(id));
     updateOptionSelection();
+    updateCarryAvailability();
     setOptionsOpen(false);
     status.textContent = wasSelected
       ? `${option.description} turned off`
@@ -238,6 +240,10 @@ let hoveredDecimal = null;
 function getCellKey(row, column) {
   return `${row}:${column}`;
 }
+
+// The blue splat outline and greyed-out rest of the grid around the
+// selected cell. Turned off for now; set to true to bring it back.
+const showSelectionSplat = false;
 
 const svgNamespace = "http://www.w3.org/2000/svg";
 const splat = document.createElementNS(svgNamespace, "svg");
@@ -316,11 +322,27 @@ function updateSplat() {
   });
   // A filled-in carry shrinks to its small badge on the cell until it is
   // tapped again; an empty one keeps showing the placeholder to tap.
-  carryEditor.hidden = entryTarget !== "carry" && Boolean(carry);
+  carryEditor.hidden =
+    !isCarryEnabled() || (entryTarget !== "carry" && Boolean(carry));
   carryEditor.setAttribute(
     "aria-label",
     carry ? `Edit carry ${carry}` : "Add carry or borrow",
   );
+}
+
+function isCarryEnabled() {
+  return selectedMathOptions.has("carry-borrow");
+}
+
+// Carries and borrows are only shown and editable while the carry/borrow
+// math option is selected; their values are kept for when it comes back.
+function updateCarryAvailability() {
+  grid.toggleAttribute("data-carry-enabled", isCarryEnabled());
+  if (!isCarryEnabled() && entryTarget === "carry") {
+    setEntryTarget("cell");
+  } else {
+    updateSplat();
+  }
 }
 
 function setEntryTarget(target) {
@@ -518,7 +540,11 @@ function renderCells() {
       });
       cell.addEventListener("click", (event) => {
         const isActive = activeCell === cell;
-        if (event.target.closest(".cell-carry") && carryBadge.textContent) {
+        if (
+          isCarryEnabled() &&
+          event.target.closest(".cell-carry") &&
+          carryBadge.textContent
+        ) {
           if (!isActive) {
             selectCell(cell, row, column);
           }
@@ -584,7 +610,10 @@ function renderCells() {
     }
   }
 
-  grid.append(splat, carryEditor);
+  if (showSelectionSplat) {
+    grid.append(splat);
+  }
+  grid.append(carryEditor);
   updateSplat();
 }
 

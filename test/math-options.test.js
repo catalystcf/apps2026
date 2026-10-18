@@ -14,7 +14,9 @@ test("offers fraction and carry/borrow options", () => {
 });
 
 test("selecting an option records it", () => {
-  expect(toggleMathOption(new Set(), "fraction")).toEqual(new Set(["fraction"]));
+  expect(toggleMathOption(new Set(), "fraction")).toEqual(
+    new Set(["fraction"]),
+  );
 });
 
 test("options can be selected independently and toggled off", () => {

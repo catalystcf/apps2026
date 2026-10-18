@@ -443,6 +443,7 @@
       .worksheet-cell-value {
         position: relative;
         z-index: 1;
+        font-size: 1.15rem;
       }
 
       .cell-decimal {
@@ -475,6 +476,10 @@
       }
 
       .cell-carry:empty {
+        display: none;
+      }
+
+      .worksheet-grid:not([data-carry-enabled]) .cell-carry {
         display: none;
       }
 
